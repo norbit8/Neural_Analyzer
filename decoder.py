@@ -15,6 +15,9 @@ from sklearn.neighbors import KNeighborsClassifier
 import random
 from sklearn.svm import SVC
 import pickle
+from scipy.io import loadmat
+from pandas import DataFrame
+from typing import List
 
 class decoder(object):
     """
@@ -29,18 +32,33 @@ class decoder(object):
 
     SAMPLES_LOWER_BOUND = 102  # filter the cells with less than _ sampels
     POPULATION_TYPE = "ss"  # type of population
-    DIR = '/content/drive/My Drive/mati_lab/final/csv_data/pursuit_8_dir_75and25/'
+    # DIR = '/content/drive/My Drive/mati_lab/final/csv_data/pursuit_8_dir_75and25/'
 
     # noga's cells  '/content/drive/My Drive/mati_lab/final/csv_data/pursuit_8_dir_75and25/'
     # mati's first good cells directory = '/content/drive/My Drive/mati_lab/first_assignment/code_and_data_2020/data/csv_files/'
     # mati's second good cells directory '/content/drive/My Drive/mati_lab/final/good_data/csv/'
-    def __init__(self, input_dir: str, output_dir: str):
-        self._input_dir = input_dir
-        self._output_dir = output_dir
+    def __init__(self, input_dir: str, output_dir: str, population_names : List[str]):
+        self._input_dir = input_dir # #note should be ende with / for example users/bin/
+        self._output_dir = output_dir #note should be ende with / for example users/bin/
+        self._population_names = population_names
 
 
-    def convert_matlab_to_csv(self):
-        pass
+    def convert_matlab_to_csv(self, type='eyes'):
+        if (type=='eyes'):
+            DATA_DIR = self._input_dir
+            cell_names = fnmatch.filter(os.listdir(DATA_DIR), '*.mat')  # filtering only the mat files.
+            cell_names.sort()  # sorting the names of the files in order to create consistent runs.
 
-     def boom():
-        pass
+            for cell in cell_names:
+                DATA_LOC = DATA_DIR + cell  # cell file location
+                data = loadmat(DATA_LOC)  # loading the matlab data file to dict
+                tg_dir = data['data']['target_direction'][0][0][0] / 45
+                spikes = data['data']['spikes'][0][0].todense().transpose()
+                tg_time = data['data']['target_motion'][0][0][0]
+                mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
+                # saving the data to a csv file, and concatenating the number of samples from each file.
+                DataFrame(mat).to_csv(self._output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
+
+        else:
+            #TODO REWARDS
+            pass
