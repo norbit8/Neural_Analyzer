@@ -41,3 +41,6 @@ class decoder(object):
 
     def convert_matlab_to_csv(self):
         pass
+
+     def boom():
+        pass
