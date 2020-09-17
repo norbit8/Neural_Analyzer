@@ -27,7 +27,7 @@ class decoder(object):
     K = 48  # number of files per time
     n = 15  # how many rows to poll out of around 17-20 rows
 
-    SAMPLES_LOWER_BOUND = 101  # filter the cells with less than _ sampels
+    SAMPLES_LOWER_BOUND = 102  # filter the cells with less than _ sampels
     POPULATION_TYPE = "ss"  # type of population
     DIR = '/content/drive/My Drive/mati_lab/final/csv_data/pursuit_8_dir_75and25/'
 
