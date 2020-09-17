@@ -38,6 +38,8 @@ class decoder(object):
         self._input_dir = input_dir
         self._output_dir = output_dir
 
-
     def convert_matlab_to_csv(self):
+        pass
+      
+     def boom():
         pass
