@@ -74,3 +74,7 @@ class decoder(object):
             # saving the data to a csv file, and concatenating the number of samples from each file.
             DataFrame(mat).to_csv(self._output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
 
+
+
+    def algo(self):
+        pass
