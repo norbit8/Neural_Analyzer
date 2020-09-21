@@ -43,22 +43,34 @@ class decoder(object):
         self._population_names = population_names
 
 
+    def filter_cells(self, cell_names, name):
+        return list(filter(lambda cell_name: True if cell_name.find(name) != -1 else False, cell_names))
+
+
     def convert_matlab_to_csv(self, type='eyes'):
-        if (type=='eyes'):
-            DATA_DIR = self._input_dir
-            cell_names = fnmatch.filter(os.listdir(DATA_DIR), '*.mat')  # filtering only the mat files.
-            cell_names.sort()  # sorting the names of the files in order to create consistent runs.
-
-            for cell in cell_names:
-                DATA_LOC = DATA_DIR + cell  # cell file location
-                data = loadmat(DATA_LOC)  # loading the matlab data file to dict
+        """
+        convert matlab files to csv files. each file represent a table of the trials and last coloum will be the
+        type. if you want to analyze eyes movement type=eyes etc..
+        """
+        DATA_DIR = self._input_dir
+        cell_names = fnmatch.filter(os.listdir(DATA_DIR), '*.mat')  # filtering only the mat files.
+        cell_names.sort()  # sorting the names of the files in order to create consistent runs.
+        cells = []
+        for name in self._population_names:
+           cells += self.filter_cells(cell_names, name)
+        cell_names = cells
+        for cell in cell_names:
+            DATA_LOC = DATA_DIR + cell  # cell file location
+            data = loadmat(DATA_LOC)  # loading the matlab data file to dict
+            if (type == 'eyes'):
                 tg_dir = data['data']['target_direction'][0][0][0] / 45
-                spikes = data['data']['spikes'][0][0].todense().transpose()
-                tg_time = data['data']['target_motion'][0][0][0]
-                mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
-                # saving the data to a csv file, and concatenating the number of samples from each file.
-                DataFrame(mat).to_csv(self._output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
+            elif (type == 'rewards'):
+                tg_dir = data['data']['reward_probability'][0][0][0]
+                tg_dir[tg_dir == 75] = 1
+                tg_dir[tg_dir == 25] = 0
+            spikes = data['data']['spikes'][0][0].todense().transpose()
+            tg_time = data['data']['target_motion'][0][0][0]
+            mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
+            # saving the data to a csv file, and concatenating the number of samples from each file.
+            DataFrame(mat).to_csv(self._output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
 
-        else:
-            #TODO REWARDS
-            pass
