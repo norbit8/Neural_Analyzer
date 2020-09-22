@@ -44,14 +44,14 @@ class decoder(object):
         @param output_dir:
         @param population_names: must be from msn CRB ss cs SNR (mabye more..)
         """
-        self._input_dir = input_dir # #note should be ende with / for example users/bin/
-        self._output_dir = output_dir #note should be ende with / for example users/bin/
+        self._input_dir =  os.path.join(input_dir, '')
+        self._output_dir = os.path.join(output_dir, '')
         self.temp_path_for_writing = output_dir
-        self._population_names = population_names
+        self._population_names = [x.upper() for x in population_names]
 
 
     def filter_cells(self, cell_names, name):
-        return list(filter(lambda cell_name: True if cell_name.find(name) != -1 else False, cell_names))
+        return list(filter(lambda cell_name: True if cell_name.find(name) != -1 else False, [x.upper() for x in cell_names]))
 
 
     def convert_matlab_to_csv(self, type='eyes'):
@@ -60,6 +60,7 @@ class decoder(object):
         type. if you want to analyze eyes movement type=eyes etc..
         """
         DATA_DIR = self._input_dir
+
         cell_names = fnmatch.filter(os.listdir(DATA_DIR), '*.mat')  # filtering only the mat files.
         cell_names.sort()  # sorting the names of the files in order to create consistent runs.
         cells = []
@@ -79,7 +80,8 @@ class decoder(object):
             tg_time = data['data']['target_motion'][0][0][0]
             mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
             # saving the data to a csv file, and concatenating the number of samples from each file.
-            DataFrame(mat).to_csv(self._output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
+            self.createDirectory("csv_files")
+            DataFrame(mat).to_csv(self.temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
 
     def savesInfo(self, info, pop_type, expirience_type):
         with open(self.temp_path_for_writing + pop_type + "_" + expirience_type, 'wb') as info_file:
@@ -156,7 +158,7 @@ class decoder(object):
             cut_last = LAST_COLUMN
         loadFiles = []
         for cell_name in sampling:
-            dataset = pd.read_csv(self._input_dir + cell_name)
+            dataset = pd.read_csv(self.temp_path_for_reading + cell_name)
             X = dataset.iloc[:, cut_first  : cut_last].values
             y = dataset.iloc[:, -1].values
             X = self.filterWithGaussian(X)
@@ -178,10 +180,12 @@ class decoder(object):
         @param type: should be 0 for persuit or 1 for  saccade
         @return:
         """
+
         if (type not in [0,1]):
             print("type should be 0 if pursuit or 1 is saccade")
             return
 
+        self.temp_path_for_reading = self._output_dir + "csv_files/"
         self.createDirectory(self.d[type])
         # loading folder
         all_cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.csv')
@@ -244,6 +248,7 @@ class decoder(object):
         @param type:  should be 0 for persuit or 1 for  saccade
         @return:
         """
+        self.temp_path_for_reading = self._output_dir + "csv_files/"
 
         self.createDirectory(self.d[type] +"_FREGMENTS")
 
@@ -253,9 +258,8 @@ class decoder(object):
 
 
         # loading folder
-        all_cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.csv')
+        all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
         all_cell_names.sort()
-
         iterate_population = self._population_names
         if choose_just_one != []:
             if len(choose_just_one) != 1:
@@ -269,7 +273,7 @@ class decoder(object):
             # create classifier
             classifier = KNeighborsClassifier(n_neighbors = self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
 
-            cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.csv')
+            cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
             cell_names.sort()
 
             # if it is noga population
@@ -314,6 +318,10 @@ class decoder(object):
                     self.savesInfo(info, population, self.d[type] + "_EYES_FRAGMENT_" + str(segment))
             self.saveToLogger(population  + "_" +  self.d[type] +"_EYES", type)
 
-a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/','/Users/shaigindin/MATY/Neural_Analyzer/files/out/', ['SNR','msn','CRB'])
-# a.simple_knn_eyes(1)
-a.simple_knn_eye_fregment(1)
+
+
+a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin/MATY/Neural_Analyzer/files/out', ['SNR','msn','CRB','cs'])
+# a.convert_matlab_to_csv()
+# a.simple_knn_eyes(0)
+a.simple_knn_eye_fregment(0)
+
