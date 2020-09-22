@@ -311,8 +311,11 @@ class decoder(object):
                         infoPerGroupOfCells.append(scoreForCells)
                     info.append((infoPerGroupOfCells, totalAv / self.TIMES))
                     sums.append(totalAv / self.TIMES)
-                    self.savesInfo(info, population, self.d[type] + "_EYES_FRAGMENT_" + str(segment))
+                    self.savesInfo(info, population,  str(segment))
             self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
 
 
 
+a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/','/Users/shaigindin/MATY/Neural_Analyzer/files/out/', ['SNR','msn','CRB'])
+a.simple_knn_eye_fregment(0)
+a.simple_knn_eye_fregment(1)
