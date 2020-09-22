@@ -1,0 +1,6 @@
+NOTES
+1) in the Documentation : if user wants matching cells so he should put only matching cells in the input directory
+2) matlab files should look likes this "populationName#cellName for example CRB#4391.mat"
+
+TODO
+1) MATLAB TO CSV method : save all files will be "NumberOfTrials#population"
