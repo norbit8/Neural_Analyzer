@@ -1,4 +1,4 @@
-#-=-=-=-=-=-=--=-=-=-= IMPORTS =-=-=-=-=-=-=--
+# -=-=-=-=-=-=--=-=-=-= IMPORTS =-=-=-=-=-=-=--
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -22,6 +22,7 @@ from typing import List
 
 LAST_COLUMN = -1
 
+
 class decoder(object):
     """
     Decoder Class
@@ -31,28 +32,27 @@ class decoder(object):
     NEIGHBORS = 1  # only closet neighbour, act like SVM
     TIMES = 1  # number of iteration on each K-population of cells.
     K = 48  # number of files per time default
-    LAG = 1000 #in ms
+    LAG = 1000  # in ms
     d = {0: "PURSUIT", 1: "SACCADE"}
     SAMPLES_LOWER_BOUND = 10  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1
     SEGMENTS = 12
 
-    def __init__(self, input_dir: str, output_dir: str, population_names : List[str]):
+    def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
         insert valid input_dir, output_dir and the population name mus be on
         @param input_dir:
         @param output_dir:
         @param population_names: must be from msn CRB ss cs SNR (mabye more..)
         """
-        self._input_dir =  os.path.join(input_dir, '')
+        self._input_dir = os.path.join(input_dir, '')
         self._output_dir = os.path.join(output_dir, '')
         self.temp_path_for_writing = output_dir
         self._population_names = [x.upper() for x in population_names]
 
-
     def filter_cells(self, cell_names, name):
-        return list(filter(lambda cell_name: True if cell_name.find(name) != -1 else False, [x.upper() for x in cell_names]))
-
+        return list(
+            filter(lambda cell_name: True if cell_name.find(name) != -1 else False, [x.upper() for x in cell_names]))
 
     def convert_matlab_to_csv(self, type='eyes'):
         """
@@ -65,7 +65,7 @@ class decoder(object):
         cell_names.sort()  # sorting the names of the files in order to create consistent runs.
         cells = []
         for name in self._population_names:
-           cells += self.filter_cells(cell_names, name)
+            cells += self.filter_cells(cell_names, name)
         cell_names = cells
         for cell in cell_names:
             DATA_LOC = DATA_DIR + cell  # cell file location
@@ -88,13 +88,13 @@ class decoder(object):
             pickle.dump(info, info_file)
 
     def saveToLogger(self, name_of_file_to_write_to_logger, type):
-        with open(self.temp_path_for_writing + "Logger"+ self.d[type] +".txt", "a+") as info_file:
+        with open(self.temp_path_for_writing + "Logger" + self.d[type] + ".txt", "a+") as info_file:
             info_file.write(name_of_file_to_write_to_logger + "\n")
 
     def loadFromLogger(self, type):
         try:
             l = []
-            with open(self.temp_path_for_writing + "Logger" + self.d[type] +".txt", "r") as info_file:
+            with open(self.temp_path_for_writing + "Logger" + self.d[type] + ".txt", "r") as info_file:
                 for line in info_file.readlines():
                     l.append(line.rstrip().split('_')[0])
             return l
@@ -149,17 +149,17 @@ class decoder(object):
             testMatriceCombined.append(testSampelsMatrice)
         return np.hstack(TrainAvgMatricesCombined), np.hstack(testMatriceCombined)
 
-    def readFromDisk(self, sampling, is_fragments = False, segment = 0):
+    def readFromDisk(self, sampling, is_fragments=False, segment=0):
         if (is_fragments):
             cut_first = self.LAG + 100 * segment
-            cut_last =self.LAG + 100 * (segment + 1)
+            cut_last = self.LAG + 100 * (segment + 1)
         else:
             cut_first = self.LAG
             cut_last = LAST_COLUMN
         loadFiles = []
         for cell_name in sampling:
             dataset = pd.read_csv(self.temp_path_for_reading + cell_name)
-            X = dataset.iloc[:, cut_first  : cut_last].values
+            X = dataset.iloc[:, cut_first: cut_last].values
             y = dataset.iloc[:, -1].values
             X = self.filterWithGaussian(X)
             loadFiles.append((X, y))
@@ -173,15 +173,14 @@ class decoder(object):
                 temp.append(cell_name)
         return temp
 
-
-    def simple_knn_eyes(self, type :int):
+    def simple_knn_eyes(self, type: int):
         """
 
         @param type: should be 0 for persuit or 1 for  saccade
         @return:
         """
 
-        if (type not in [0,1]):
+        if (type not in [0, 1]):
             print("type should be 0 if pursuit or 1 is saccade")
             return
 
@@ -197,8 +196,8 @@ class decoder(object):
             # build list which saves info
             info = []
 
-            if (self.K > len(cell_names) -1):
-                self.K = len(cell_names) -1
+            if (self.K > len(cell_names) - 1):
+                self.K = len(cell_names) - 1
 
             # saves the rate of the success for each k population
             sums = []
@@ -231,18 +230,17 @@ class decoder(object):
                     totalAv += sum1 / self.NUMBER_OF_ITERATIONS
                     scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
                     infoPerGroupOfCells.append(scoreForCells)
-                info.append((infoPerGroupOfCells,totalAv/self.TIMES))
+                info.append((infoPerGroupOfCells, totalAv / self.TIMES))
                 sums.append(totalAv / self.TIMES)
-            self.savesInfo(info, population, self.d[type] +"_EYES")
-            self.saveToLogger(population  + "_" +  self.d[type] +"_EYES", type)
+            self.savesInfo(info, population, self.d[type] + "_EYES")
+            self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
 
     def createDirectory(self, name):
         if not os.path.exists(self._output_dir + name):
             os.makedirs(self._output_dir + name)
-        self.temp_path_for_writing = self._output_dir + name  + "/"
+        self.temp_path_for_writing = self._output_dir + name + "/"
 
-
-    def simple_knn_eye_fregment(self, type, choose_just_one = [], choose_of_segements = -1):
+    def simple_knn_eye_fregment(self, type, choose_just_one=[], choose_of_segements=-1):
         """
 
         @param type:  should be 0 for persuit or 1 for  saccade
@@ -250,12 +248,11 @@ class decoder(object):
         """
         self.temp_path_for_reading = self._output_dir + "csv_files/"
 
-        self.createDirectory(self.d[type] +"_FREGMENTS")
+        self.createDirectory(self.d[type] + "_FRAGMENTS")
 
-        if (type not in [0,1]):
+        if (type not in [0, 1]):
             print("type should be 0 if pursuit or 1 is saccade")
             return
-
 
         # loading folder
         all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
@@ -271,16 +268,15 @@ class decoder(object):
             POPULATION_TYPE = population
 
             # create classifier
-            classifier = KNeighborsClassifier(n_neighbors = self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
+            classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
 
             cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
             cell_names.sort()
 
-            # if it is noga population
             cell_names = self.filter_cells(cell_names, POPULATION_TYPE)
             cell_names = self.filterCellsbyRows(cell_names)
-            # limit K to 48
-            K = 50 if len(cell_names) - 1 > 50 else len(cell_names) - 1
+            # limit K to 48 or popultaion (lower bound)
+            K = K if len(cell_names) - 1 > 50 else len(cell_names) - 1
 
             start_choose_of_segements = 0
             if (choose_of_segements != -1):
@@ -290,7 +286,7 @@ class decoder(object):
                 sums = []
                 info = []
                 segment = i
-                for number_of_cells in range(1,K+1):
+                for number_of_cells in range(1, K + 1):
                     # saves each groupCells
                     infoPerGroupOfCells = []
 
@@ -302,7 +298,7 @@ class decoder(object):
                         sum = 0
                         # choose random K cells
                         sampeling = random.sample(cell_names, k=number_of_cells)
-                        loadFiles = self.readFromDisk(sampeling, is_fragments=True, segment = segment)
+                        loadFiles = self.readFromDisk(sampeling, is_fragments=True, segment=segment)
                         for i in range(self.NUMBER_OF_ITERATIONS):
                             X_train, X_test = self.mergeSampeling1(loadFiles)
                             y_train, y_test = self.getTestVectors()
@@ -316,12 +312,7 @@ class decoder(object):
                     info.append((infoPerGroupOfCells, totalAv / self.TIMES))
                     sums.append(totalAv / self.TIMES)
                     self.savesInfo(info, population, self.d[type] + "_EYES_FRAGMENT_" + str(segment))
-            self.saveToLogger(population  + "_" +  self.d[type] +"_EYES", type)
+            self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
 
 
-
-a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin/MATY/Neural_Analyzer/files/out', ['SNR','msn','CRB','cs'])
-# a.convert_matlab_to_csv()
-# a.simple_knn_eyes(0)
-a.simple_knn_eye_fregment(0)
 
