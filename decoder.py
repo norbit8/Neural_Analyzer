@@ -30,13 +30,13 @@ class decoder(object):
     NUMBER_OF_ITERATIONS = 1  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 30  # number of iteration on each K-population of cells.
+    TIMES = 50  # number of iteration on each K-population of cells.
     K = 48  # number of files per time default
-    LAG = 1000  # in ms
-    d = {0: "PURSUIT", 1: "SACCADE"}
+    LAG = 1000  # where to start the experiment (in the eye movement)
+    d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SAMPLES_LOWER_BOUND = 10  # filter the cells with less than _ sampels
-    number_of_cells_to_choose_for_test = 1
-    SEGMENTS = 12
+    number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
+    SEGMENTS = 12 #how many segment of 100ms we want to cut.
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
@@ -51,13 +51,21 @@ class decoder(object):
         self._population_names = [x.upper() for x in population_names]
 
     def filter_cells(self, cell_names, name):
+        """
+
+        @param cell_names:
+        @param name:
+        @return:
+        """
         return list(
             filter(lambda cell_name: True if cell_name.find(name) != -1 else False, [x.upper() for x in cell_names]))
 
     def convert_matlab_to_csv(self, type='eyes'):
         """
-        convert matlab files to csv files. each file represent a table of the trials and last coloum will be the
-        type. if you want to analyze eyes movement type=eyes etc..
+            The expirement data is provided in the form of a MATLAB file, thus some pre-processing is needed
+            in order to convert it to a more useable data-structre, in particular numpy array.
+            Note that we convert the MATLAB file data to a pandas DataFrame and then we save it to a csv
+            file for easier access in the future.
         """
         cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.mat')  # filtering only the mat files.
         cell_names.sort()  # sorting the names of the files in order to create consistent runs.
@@ -75,7 +83,7 @@ class decoder(object):
                 tg_dir[tg_dir == 75] = 1
                 tg_dir[tg_dir == 25] = 0
             spikes = data['data']['spikes'][0][0].todense().transpose()
-            tg_time = data['data']['target_motion'][0][0][0]
+            # tg_time = data['data']['target_motion'][0][0][0]
             mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
             # saving the data to a csv file, and concatenating the number of samples from each file.
             if type == "eyes":
@@ -85,14 +93,32 @@ class decoder(object):
             DataFrame(mat).to_csv(self.temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
 
     def savesInfo(self, info, pop_type, expirience_type):
+        """
+        Saves the information of the trials into file
+        @param info: the results to be saved
+        @param pop_type: the name of the population SNR MSN etc..
+        @param expirience_type: eyes or reward
+        @return:
+        """
         with open(self.temp_path_for_writing + pop_type + "_" + expirience_type, 'wb') as info_file:
             pickle.dump(info, info_file)
 
     def saveToLogger(self, name_of_file_to_write_to_logger, type):
+        """
+        save to logger the populations the alorithm finished
+        @param name_of_file_to_write_to_logger:
+        @param type:
+        @return:
+        """
         with open(self.temp_path_for_writing + "Logger" + self.d[type] + ".txt", "a+") as info_file:
             info_file.write(name_of_file_to_write_to_logger + "\n")
 
     def loadFromLogger(self, type):
+        """
+        load from logger all the population the logger already finished with
+        @param type:
+        @return:
+        """
         try:
             l = []
             with open(self.temp_path_for_writing + "Logger" + self.d[type] + ".txt", "r") as info_file:
@@ -103,11 +129,21 @@ class decoder(object):
             return []
 
     def filterWithGaussian(self, X):
+        """
+        Smoothing the Matrix of trials
+        @param X: the matrice needed to be smooth
+        @return:
+        """
         for i in range(len(X)):
             X[i] = gaussian_filter(X[i], sigma=self.SIGMA)
         return X
 
     def extractNSampelsFromOneDirection(self, direction):
+        """
+
+        @param direction:
+        @return:
+        """
         np.random.shuffle(direction)
         test = direction[:self.number_of_cells_to_choose_for_test]
         train = direction[self.number_of_cells_to_choose_for_test:]
@@ -132,12 +168,24 @@ class decoder(object):
         return np.vstack(directionsAverageVector), np.vstack(testSampels)
 
     def createTrainAndTestMatrice(self, X, y):
+        """
+        split the X matrice into 2 matrices. one for the train and one for the test
+        @param X:
+        @param y:
+        @return:
+        """
         directions = self.SortMatriceToListOfDirections(X, y)
         averageVectorsMatrice, testSampelsMatrice = self.extractNSampelsFromAllDirections(directions)
         return averageVectorsMatrice, testSampelsMatrice
 
      #if type is eyes so type =8
     def getTestVectors(self, type=8):
+        """
+        creates the test and train vectors. we already know them without the X train and test matrice therefore we
+        made them automatically. if the experiment is 'eyes' we know that there is 8 direction vectors
+        @param type: 8 or 2 depending on the experiment (8 driections or 2 rewards type)
+        @return:
+        """
         y_train = np.hstack([i for i in range(type)]).flatten()
         y_test = np.array(sum([[j for i in range(self.number_of_cells_to_choose_for_test)] for j in range(type)], []))
         return y_train, y_test
@@ -394,7 +442,8 @@ class decoder(object):
 
 a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin/MATY/Neural_Analyzer/files/out/', ['SNR','msn'])
 # a.convert_matlab_to_csv(type="rewards")
-a.simple_knn_rewards(1)
+# a.simple_knn_rewards(0)
 # a.simple_knn_eye_freg ment(0)
-# a.simple_knn_eyes(0)
+a.simple_knn_eyes(0)
 # a.simple_knn_eyes(1)
+
