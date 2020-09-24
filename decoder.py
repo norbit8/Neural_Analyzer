@@ -48,10 +48,10 @@ class decoder(object):
         @param output_dir:
         @param population_names: must be from msn CRB ss cs SNR (mabye more..)
         """
-        self._input_dir = os.path.join(input_dir, '')
-        self._output_dir = os.path.join(output_dir, '')
-        self._population_names = [x.upper() for x in population_names]
-        self.temp_path_for_writing = output_dir
+        self.__input_dir = os.path.join(input_dir, '')
+        self.__output_dir = os.path.join(output_dir, '')
+        self.__population_names = [x.upper() for x in population_names]
+        self.__temp_path_for_writing = output_dir
 
 
     def filter_cells(self, cell_names, name):
@@ -71,14 +71,14 @@ class decoder(object):
             Note that we convert the MATLAB file data to a pandas DataFrame and then we save it to a csv
             file for easier access in the future.
         """
-        cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.mat')  # filtering only the mat files.
+        cell_names = fnmatch.filter(os.listdir(self.__input_dir), '*.mat')  # filtering only the mat files.
         cell_names.sort()  # sorting the names of the files in order to create consistent runs.
         cells = []
-        for name in self._population_names:
+        for name in self.__population_names:
             cells += self.filter_cells(cell_names, name)
             cell_names = cells
         for cell in cell_names:
-            DATA_LOC = self._input_dir + cell  # cell file location
+            DATA_LOC = self.__input_dir + cell  # cell file location
             data = loadmat(DATA_LOC)  # loading the matlab data file to dict
             if (type == "eyes"):
                 tg_dir = data['data']['target_direction'][0][0][0] / 45
@@ -94,7 +94,7 @@ class decoder(object):
                 self.createDirectory("csv_files/eyes/")
             else:
                 self.createDirectory("csv_files/rewards/")
-            DataFrame(mat).to_csv(self.temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
+            DataFrame(mat).to_csv(self.__temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
 
     def savesInfo(self, info, pop_type, expirience_type):
         """
@@ -104,7 +104,7 @@ class decoder(object):
         @param expirience_type: eyes or reward
         @return:
         """
-        with open(self.temp_path_for_writing + pop_type + "_" + expirience_type, 'wb') as info_file:
+        with open(self.__temp_path_for_writing + pop_type + "_" + expirience_type, 'wb') as info_file:
             pickle.dump(info, info_file)
 
     def saveToLogger(self, name_of_file_to_write_to_logger, type):
@@ -114,7 +114,7 @@ class decoder(object):
         @param type:
         @return:
         """
-        with open(self.temp_path_for_writing + "Logger" + self.d[type] + ".txt", "a+") as info_file:
+        with open(self.__temp_path_for_writing + "Logger" + self.d[type] + ".txt", "a+") as info_file:
             info_file.write(name_of_file_to_write_to_logger + "\n")
 
     def loadFromLogger(self, type):
@@ -125,7 +125,7 @@ class decoder(object):
         """
         try:
             l = []
-            with open(self.temp_path_for_writing + "Logger" + self.d[type] + ".txt", "r") as info_file:
+            with open(self.__temp_path_for_writing + "Logger" + self.d[type] + ".txt", "r") as info_file:
                 for line in info_file.readlines():
                     l.append(line.rstrip().split('_')[0])
             return l
@@ -267,13 +267,13 @@ class decoder(object):
             print("type should be 0 if pursuit or 1 is saccade")
             return
 
-        self.temp_path_for_reading = self._output_dir + "csv_files/eyes/"
+        self.temp_path_for_reading = self.__output_dir + "csv_files/eyes/"
         self.createDirectory("EYES/" + self.d[type])
 
         # loading folder
-        all_cell_names = fnmatch.filter(os.listdir(self._output_dir + "csv_files/eyes/"), '*.csv')
+        all_cell_names = fnmatch.filter(os.listdir(self.__output_dir + "csv_files/eyes/"), '*.csv')
         all_cell_names.sort()
-        for population in [x for x in self._population_names if x not in self.loadFromLogger(type)]:
+        for population in [x for x in self.__population_names if x not in self.loadFromLogger(type)]:
             cell_names = self.filter_cells(all_cell_names, population)
             cell_names = self.filterCellsbyRows(cell_names)
 
@@ -320,9 +320,9 @@ class decoder(object):
             self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
 
     def createDirectory(self, name):
-        if not os.path.exists(self._output_dir + name):
-            os.makedirs(self._output_dir + name)
-        self.temp_path_for_writing = self._output_dir + name + "/"
+        if not os.path.exists(self.__output_dir + name):
+            os.makedirs(self.__output_dir + name)
+        self.__temp_path_for_writing = self.__output_dir + name + "/"
 
     def simple_knn_eye_fregment(self, type, choose_just_one=[], choose_of_segements=-1):
         """
@@ -330,7 +330,7 @@ class decoder(object):
         @param type:  should be 0 for persuit or 1 for  saccade
         @return:
         """
-        self.temp_path_for_reading = self._output_dir + "csv_files/eyes/"
+        self.temp_path_for_reading = self.__output_dir + "csv_files/eyes/"
 
         self.createDirectory("EYES/" + self.d[type] + "_FRAGMENTS")
 
@@ -341,7 +341,7 @@ class decoder(object):
         # loading folder
         all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
         all_cell_names.sort()
-        iterate_population = self._population_names
+        iterate_population = self.__population_names
         if choose_just_one != []:
             if len(choose_just_one) != 1:
                 print("must be just one population e.g [msn,]")
@@ -418,13 +418,13 @@ class decoder(object):
             print("type should be 0 if pursuit or 1 is saccade")
             return
 
-        self.temp_path_for_reading = self._output_dir + "csv_files/rewards/"
+        self.temp_path_for_reading = self.__output_dir + "csv_files/rewards/"
         self.createDirectory("REWARDS/" + self.d[type])
 
         # loading folder
-        all_cell_names = fnmatch.filter(os.listdir(self._output_dir + "csv_files/rewards/"), '*.csv')
+        all_cell_names = fnmatch.filter(os.listdir(self.__output_dir + "csv_files/rewards/"), '*.csv')
         all_cell_names.sort()
-        for population in [x for x in self._population_names if x not in self.loadFromLogger(type)]:
+        for population in [x for x in self.__population_names if x not in self.loadFromLogger(type)]:
 
             cell_names = self.filter_cells(all_cell_names, population)
             cell_names = self.filterCellsbyRows(cell_names)
