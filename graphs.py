@@ -99,9 +99,10 @@ class Graphs:
                                     'population': pop,
                                     'experiment_type': self.__experiment_names[exp_index]},
                                    ignore_index=True)
+        # df.loc[(df['experiment_type'] == 'PURSUIT'), ['acc']] += 0.1
         self.__df = df
 
-    def draw_acc_over_concat_cells(self, populations: List[str] = None,
+    def plot_acc_over_concat_cells(self, populations: List[str] = None,
                                    experiment_types: List[str] = None, number_of_concat_cells: int = 100,
                                    ticks: int = 1):
         """
@@ -124,6 +125,35 @@ class Graphs:
               scale_y_continuous(breaks=np.arange(0, 1, 0.05)) +  # Y axis scaling
               labs(x='Number of concatenated cells', y='Accuracy') +
               theme_classic())
+        return filtered_dataframe
+
+    def plot_experiments_same_populations(self, populations: List[str] = None,
+                                   experiment_types: List[str] = None, number_of_concat_cells: int = 100,
+                                   ticks: int = 1):
+        """
+        Drawing a graphs of accuracies over number of concatenated cells, of all the populations selected.
+        and of all of the experiment types.
+        :param populations: Selected populations.
+        :param experiment_types: experiment types.
+        :param number_of_concat_cells: Number of cells to show !!!INCLUSIVE!!!. (X Axis ticks)
+        :return: The filtered DataFrame.
+        """
+        if populations is None:
+            populations = self.__populations
+        if experiment_types is None:
+            experiments = self.__experiment_names
+        filtered_dataframe = self.data_acc_over_concat_cells(populations, experiment_types, number_of_concat_cells)
+        if number_of_concat_cells > self.__number_of_cells:
+            print(CRED + "You Don't have enough cells, so only " + str(self.__number_of_cells) + " was printed." + CEND)
+        for pop in populations:
+            print(ggplot(data=filtered_dataframe[(filtered_dataframe['population'] == pop)],
+                         mapping=aes(x='concatenated_cells', y='acc', color='experiment_type', group='experiment_type')) + \
+                  geom_line() +
+                  geom_point() +
+                  scale_x_discrete(breaks=range(0, number_of_concat_cells + 1, ticks)) +  # X axis leaving out some ticks
+                  scale_y_continuous(breaks=np.arange(0, 1, 0.05)) +  # Y axis scaling
+                  labs(x='Number of concatenated cells', y='Accuracy') +
+                  theme_classic())
         return filtered_dataframe
 
     def data_acc_over_concat_cells(self, populations: List[str] = None,
@@ -266,7 +296,7 @@ class Graphs:
 
     def help(self):
         print("commands: \n"
-              " (*) draw_acc_over_concat_cells(populations: List[str] = None,"                           
+              " (*) plot_acc_over_concat_cells(populations: List[str] = None,"                           
               "experiment_types: List[str] = None, number_of_concat_cells: int = 100,"
               "ticks: int = 1"
               ") - Draws the graph of the concatenated cells over their accuracies.\n"
@@ -274,22 +304,21 @@ class Graphs:
               "populations - Provide a list of all of the desired populations. example: ['SNR', 'CRB', 'SS'] \n"
               "experiment_types - Provide a list of all the experiment types. example: ['PURSUIT', 'SACCADE']\n"
               "number_of_concat_cells - Number of concatenated cells to show. example: 30\n"
-              "ticks - The jumps on the X axis. example: 1 \n"
+              "ticks - The jumps on the X axis. example: 1 \n\n"
               " (*) data_acc_over_concat_cells() - Getter for the data of the concatenated cells "
               "over their accuracies (Pandas DataFrame)\n"
               "USAGE: \n"
               "populations - Provide a list of all of the desired populations. example: ['SNR', 'CRB', 'SS'] \n"
               "experiment_types - Provide a list of all the experiment types. example: ['PURSUIT', 'SACCADE']\n"
-              "number_of_concat_cells - Number of concatenated cells to show. example: 30\n"
-              " (*) plot_fragments() - Plots the fragments.\n"
+              "number_of_concat_cells - Number of concatenated cells to show. example: 30\n\n"
+              " (*) plot_fragments() - Plots the fragments.\n\n"
               " (*) get_fragments() - Getter for the fragments data. (Pandas DataFrame)")
 
 
 ## EXAMPLES ###
 # g = Graphs(['SS', 'SNR', 'MSN', 'CRB'],
-#            ['PURSUIT'],
+#            ['PURSUIT', 'SACCADE'],
 #            '/home/mercydude/Desktop/Neural_Analyzer/out/',
-#            number_of_cells=30, fragments_cells=range(4), load_fragments=True)
+#            number_of_cells=30, load_fragments=True)
 #
-# # g.plot_fragments()
-# g.help()
+# g.plot_experiments_same_populations()
