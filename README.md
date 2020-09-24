@@ -1,4 +1,4 @@
-# Neural_Analyzer
+# Neural Analyzer
 A python package that includes methods for decoding neural activity.
 Specifically used in the expirement we sample neural activity from the [Basal ganglia](https://en.wikipedia.org/wiki/Basal_ganglia) and the [cerebellum](https://en.wikipedia.org/wiki/Cerebellum) (Using a *Macaca fascicularis* monkeys) while the monkeys are targeting moving rectangles.
 
