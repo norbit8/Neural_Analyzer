@@ -31,12 +31,15 @@ class decoder(object):
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
     TIMES = 50  # number of iteration on each K-population of cells.
-    K = 48  # number of files per time default
+    K = 48  # number of files per time
+    n = 15  # how many rows to poll out of around 17-20 rows
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
-    SAMPLES_LOWER_BOUND = 10  # filter the cells with less than _ sampels
-    number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
+    SAMPLES_LOWER_BOUND = 102  # filter the cells with less than _ sampels
+    number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
+    POPULATION_TYPE = "ss"  # type of population
+
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
@@ -47,8 +50,9 @@ class decoder(object):
         """
         self._input_dir = os.path.join(input_dir, '')
         self._output_dir = os.path.join(output_dir, '')
-        self.temp_path_for_writing = output_dir
         self._population_names = [x.upper() for x in population_names]
+        self.temp_path_for_writing = output_dir
+
 
     def filter_cells(self, cell_names, name):
         """
@@ -72,7 +76,7 @@ class decoder(object):
         cells = []
         for name in self._population_names:
             cells += self.filter_cells(cell_names, name)
-        cell_names = cells
+            cell_names = cells
         for cell in cell_names:
             DATA_LOC = self._input_dir + cell  # cell file location
             data = loadmat(DATA_LOC)  # loading the matlab data file to dict
@@ -474,4 +478,3 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin
 # a.simple_knn_eye_freg ment(0)
 a.simple_knn_eyes(0)
 # a.simple_knn_eyes(1)
-
