@@ -52,9 +52,9 @@ class decoder(object):
 
     def filter_cells(self, cell_names, name):
         """
-
-        @param cell_names:
-        @param name:
+        remove from list the names which not conatin name string
+        @param cell_names: list of the cell names
+        @param name: SNR/msn/cs/.. etc
         @return:
         """
         return list(
@@ -140,7 +140,7 @@ class decoder(object):
 
     def extractNSampelsFromOneDirection(self, direction):
         """
-
+        pick randomly x number of trials to test from one direction  when x = self.number_of_cells_to_choose_for_test
         @param direction:
         @return:
         """
@@ -150,6 +150,17 @@ class decoder(object):
         return train, test
 
     def SortMatriceToListOfDirections(self, X, y):
+        """
+        Given a matrix of neural spikes and the direction w.r.t each spike,
+        generates list of bundled spikes which corresponds to the same direction in each bundle.
+        each index of the list corresponds to the direction of the eye movement.
+        Also the number of spikes (vectors) in each index of the list (directions) = n,
+        which is the minimum number of directions from all the other choosen cells.
+        The way we choose cells is explained in the main function.
+        @param X:
+        @param y:
+        @return:
+        """
         directions = []
         for i in range(int(np.amax(y)+1)):
             idx = y == i
@@ -191,6 +202,11 @@ class decoder(object):
         return y_train, y_test
 
     def mergeSampeling1(self, loadFromDisk):
+        """
+        makes one matrice from all the cell names from loadFromDist list
+        @param loadFromDisk: the
+        @return:
+        """
         TrainAvgMatricesCombined = []
         testMatriceCombined = []
         for X, y in loadFromDisk:
@@ -200,6 +216,14 @@ class decoder(object):
         return np.hstack(TrainAvgMatricesCombined), np.hstack(testMatriceCombined)
 
     def readFromDisk(self, sampling, is_fragments=False, segment=0, EYES = True):
+        """
+
+        @param sampling: the names of the cells to read together and create one matrice
+        @param is_fragments: to know if to split only the segmant or to read from 1000:2200
+        @param segment:
+        @param EYES: boolean - eyes or reward
+        @return:
+        """
         if (is_fragments):
             cut_first = self.LAG + 100 * segment
             cut_last = self.LAG + 100 * (segment + 1)
@@ -217,6 +241,12 @@ class decoder(object):
         return loadFiles
 
     def filterCellsbyRows(self, cell_names):
+        """
+        filter the cells with lower bound of trials. if file is 148#SNR_4003 it means that this cell contain only 148
+        trials
+        @param cell_names:
+        @return:
+        """
         temp = []
         for cell_name in cell_names:
             new = cell_name[:cell_name.find("#")]
@@ -226,11 +256,9 @@ class decoder(object):
 
     def simple_knn_eyes(self, type: int):
         """
-
         @param type: should be 0 for persuit or 1 for  saccade
         @return:
         """
-
         if (type not in [0, 1]):
             print("type should be 0 if pursuit or 1 is saccade")
             return
