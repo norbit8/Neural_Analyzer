@@ -38,9 +38,9 @@ class decoder(object):
     # mati's first good cells directory = '/content/drive/My Drive/mati_lab/first_assignment/code_and_data_2020/data/csv_files/'
     # mati's second good cells directory '/content/drive/My Drive/mati_lab/final/good_data/csv/'
     def __init__(self, input_dir: str, output_dir: str, population_names : List[str]):
-        self._input_dir = input_dir # #note should be ende with / for example users/bin/
-        self._output_dir = output_dir #note should be ende with / for example users/bin/
-        self._population_names = population_names
+        self.__input_dir = input_dir # #note should be ende with / for example users/bin/
+        self.__output_dir = output_dir #note should be ende with / for example users/bin/
+        self.__population_names = population_names
 
 
     def filter_cells(self, cell_names, name):
@@ -52,11 +52,11 @@ class decoder(object):
         convert matlab files to csv files. each file represent a table of the trials and last coloum will be the
         type. if you want to analyze eyes movement type=eyes etc..
         """
-        DATA_DIR = self._input_dir
+        DATA_DIR = self.__input_dir
         cell_names = fnmatch.filter(os.listdir(DATA_DIR), '*.mat')  # filtering only the mat files.
         cell_names.sort()  # sorting the names of the files in order to create consistent runs.
         cells = []
-        for name in self._population_names:
+        for name in self.__population_names:
            cells += self.filter_cells(cell_names, name)
         cell_names = cells
         for cell in cell_names:
@@ -72,5 +72,5 @@ class decoder(object):
             tg_time = data['data']['target_motion'][0][0][0]
             mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
             # saving the data to a csv file, and concatenating the number of samples from each file.
-            DataFrame(mat).to_csv(self._output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
+            DataFrame(mat).to_csv(self.__output_dir + str(spikes.shape[0]) + "#" + cell[:-3] + "csv")
 
