@@ -30,7 +30,7 @@ class decoder(object):
     NUMBER_OF_ITERATIONS = 1  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 1  # number of iteration on each K-population of cells.
+    TIMES = 30  # number of iteration on each K-population of cells.
     K = 48  # number of files per time default
     LAG = 1000  # in ms
     d = {0: "PURSUIT", 1: "SACCADE"}
@@ -59,18 +59,16 @@ class decoder(object):
         convert matlab files to csv files. each file represent a table of the trials and last coloum will be the
         type. if you want to analyze eyes movement type=eyes etc..
         """
-        DATA_DIR = self._input_dir
-
-        cell_names = fnmatch.filter(os.listdir(DATA_DIR), '*.mat')  # filtering only the mat files.
+        cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.mat')  # filtering only the mat files.
         cell_names.sort()  # sorting the names of the files in order to create consistent runs.
         cells = []
         for name in self._population_names:
             cells += self.filter_cells(cell_names, name)
         cell_names = cells
         for cell in cell_names:
-            DATA_LOC = DATA_DIR + cell  # cell file location
+            DATA_LOC = self._input_dir + cell  # cell file location
             data = loadmat(DATA_LOC)  # loading the matlab data file to dict
-            if (type == 'eyes'):
+            if (type == "eyes"):
                 tg_dir = data['data']['target_direction'][0][0][0] / 45
             elif (type == 'rewards'):
                 tg_dir = data['data']['reward_probability'][0][0][0]
@@ -80,7 +78,10 @@ class decoder(object):
             tg_time = data['data']['target_motion'][0][0][0]
             mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
             # saving the data to a csv file, and concatenating the number of samples from each file.
-            self.createDirectory("csv_files")
+            if type == "eyes":
+                self.createDirectory("csv_files/eyes/")
+            else:
+                self.createDirectory("csv_files/rewards/")
             DataFrame(mat).to_csv(self.temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
 
     def savesInfo(self, info, pop_type, expirience_type):
@@ -114,7 +115,7 @@ class decoder(object):
 
     def SortMatriceToListOfDirections(self, X, y):
         directions = []
-        for i in range(8):
+        for i in range(int(np.amax(y)+1)):
             idx = y == i
             temp = X[idx, :]
             directions.append(temp)
@@ -135,9 +136,10 @@ class decoder(object):
         averageVectorsMatrice, testSampelsMatrice = self.extractNSampelsFromAllDirections(directions)
         return averageVectorsMatrice, testSampelsMatrice
 
-    def getTestVectors(self):
-        y_train = np.hstack([i for i in range(8)]).flatten()
-        y_test = np.array(sum([[j for i in range(self.number_of_cells_to_choose_for_test)] for j in range(8)], []))
+     #if type is eyes so type =8
+    def getTestVectors(self, type=8):
+        y_train = np.hstack([i for i in range(type)]).flatten()
+        y_test = np.array(sum([[j for i in range(self.number_of_cells_to_choose_for_test)] for j in range(type)], []))
         return y_train, y_test
 
     def mergeSampeling1(self, loadFromDisk):
@@ -149,7 +151,7 @@ class decoder(object):
             testMatriceCombined.append(testSampelsMatrice)
         return np.hstack(TrainAvgMatricesCombined), np.hstack(testMatriceCombined)
 
-    def readFromDisk(self, sampling, is_fragments=False, segment=0):
+    def readFromDisk(self, sampling, is_fragments=False, segment=0, EYES = True):
         if (is_fragments):
             cut_first = self.LAG + 100 * segment
             cut_last = self.LAG + 100 * (segment + 1)
@@ -161,7 +163,8 @@ class decoder(object):
             dataset = pd.read_csv(self.temp_path_for_reading + cell_name)
             X = dataset.iloc[:, cut_first: cut_last].values
             y = dataset.iloc[:, -1].values
-            X = self.filterWithGaussian(X)
+            if EYES:
+                X = self.filterWithGaussian(X)
             loadFiles.append((X, y))
         return loadFiles
 
@@ -184,10 +187,11 @@ class decoder(object):
             print("type should be 0 if pursuit or 1 is saccade")
             return
 
-        self.temp_path_for_reading = self._output_dir + "csv_files/"
-        self.createDirectory(self.d[type])
+        self.temp_path_for_reading = self._output_dir + "csv_files/eyes/"
+        self.createDirectory("EYES/" + self.d[type])
+
         # loading folder
-        all_cell_names = fnmatch.filter(os.listdir(self._input_dir), '*.csv')
+        all_cell_names = fnmatch.filter(os.listdir(self._output_dir + "csv_files/eyes/"), '*.csv')
         all_cell_names.sort()
         for population in [x for x in self._population_names if x not in self.loadFromLogger(type)]:
             cell_names = self.filter_cells(all_cell_names, population)
@@ -246,9 +250,9 @@ class decoder(object):
         @param type:  should be 0 for persuit or 1 for  saccade
         @return:
         """
-        self.temp_path_for_reading = self._output_dir + "csv_files/"
+        self.temp_path_for_reading = self._output_dir + "csv_files/eyes/"
 
-        self.createDirectory(self.d[type] + "_FRAGMENTS")
+        self.createDirectory("EYES/" + self.d[type] + "_FRAGMENTS")
 
         if (type not in [0, 1]):
             print("type should be 0 if pursuit or 1 is saccade")
@@ -315,7 +319,82 @@ class decoder(object):
             self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
 
 
+    def filterCellsbyRows(self, cell_names):
+        temp = []
+        for cell_name in cell_names:
+            new = cell_name[:cell_name.find("#")]
+            if int(new) >= self.SAMPLES_LOWER_BOUND:
+                temp.append(cell_name)
+        return temp
 
-a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/','/Users/shaigindin/MATY/Neural_Analyzer/files/out/', ['SNR','msn','CRB'])
-a.simple_knn_eye_fregment(0)
-a.simple_knn_eye_fregment(1)
+    def simple_knn_rewards(self, type: int):
+        """
+
+        @param type: should be 0 for persuit or 1 for  saccade
+        @return:
+        """
+
+        if (type not in [0, 1]):
+            print("type should be 0 if pursuit or 1 is saccade")
+            return
+
+        self.temp_path_for_reading = self._output_dir + "csv_files/rewards/"
+        self.createDirectory("REWARDS/" + self.d[type])
+
+        # loading folder
+        all_cell_names = fnmatch.filter(os.listdir(self._output_dir + "csv_files/rewards/"), '*.csv')
+        all_cell_names.sort()
+        for population in [x for x in self._population_names if x not in self.loadFromLogger(type)]:
+
+            cell_names = self.filter_cells(all_cell_names, population)
+            cell_names = self.filterCellsbyRows(cell_names)
+
+            # build list which saves info
+            info = []
+
+            if (self.K > len(cell_names) - 1):
+                self.K = len(cell_names) - 1
+
+            # saves the rate of the success for each k population
+            sums = []
+            classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
+            # iterating over k-population of cells from 1 to K
+            for number_of_cells in range(1, self.K + 1):
+                # saves each groupCells
+                infoPerGroupOfCells = []
+
+                # intializing counter
+                totalAv = 0
+
+                # iterating TImes for solid average
+                for j in range(self.TIMES):
+                    # save the names of the cells and the score
+                    scoreForCells = []
+
+                    sum1 = 0
+                    # choose random K cells
+                    sampeling = random.sample(cell_names, k=number_of_cells)
+                    loadFiles = self.readFromDisk(sampeling)
+                    for i in range(self.NUMBER_OF_ITERATIONS):
+                        X_train, X_test = self.mergeSampeling1(loadFiles)
+                        y_train, y_test = self.getTestVectors(type=2)
+                        X_train = gaussian_filter(X_train, sigma = self.SIGMA)
+                        classifier.fit(X_train, y_train)
+                        y_pred2 = classifier.predict(X_test)
+                        sum1 += accuracy_score(y_test, y_pred2)
+
+                    totalAv += sum1 / self.NUMBER_OF_ITERATIONS
+                    scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
+                    infoPerGroupOfCells.append(scoreForCells)
+                info.append((infoPerGroupOfCells, totalAv / self.TIMES))
+                sums.append(totalAv / self.TIMES)
+            self.savesInfo(info, population, self.d[type] + "_REWARDS")
+            self.saveToLogger(population + "_" + self.d[type] + "_REWARDS", type)
+
+
+a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin/MATY/Neural_Analyzer/files/out/', ['SNR','msn'])
+# a.convert_matlab_to_csv(type="rewards")
+a.simple_knn_rewards(1)
+# a.simple_knn_eye_freg ment(0)
+# a.simple_knn_eyes(0)
+# a.simple_knn_eyes(1)
