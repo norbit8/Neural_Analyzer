@@ -28,11 +28,11 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 5  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 50  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 3  # number of iteration on each K-population of cells.
-    K = 2  # number of files per time
+    TIMES = 30  # number of iteration on each K-population of cells.
+    K = 48  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
@@ -278,7 +278,7 @@ class decoder(object):
         self.createDirectory("EYES/" + self.d[type])
 
         # loading folder
-        all_cell_names = fnmatch.filter(os.listdir(self.__output_dir + "csv_files/eyes/"), '*.csv')
+        all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
         all_cell_names.sort()
         for population in [x for x in self.population_names if x not in self.loadFromLogger(type)]:
             cell_names = self.filter_cells(all_cell_names, population)
@@ -478,7 +478,6 @@ class decoder(object):
                     sum1 = 0
                     # choose random K cells
                     sampeling = random.sample(cell_names, k=number_of_cells)
-                    print(sampeling)
                     loadFiles = self.readFromDisk(sampeling)
                     for i in range(self.NUMBER_OF_ITERATIONS):
                         X_train, X_test = self.mergeSampeling1(loadFiles)
@@ -507,6 +506,9 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin
 # a.simple_knn_eyes(0)
 # a.simple_knn_eye_fregment(0)
 
+# a.simple_knn_eyes(1)
+# a.simple_knn_eyes(1)
+
 # a.simple_knn_eye_fregment(1)
 # a.simple_knn_eyes(1)
 
@@ -515,6 +517,8 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin
 
 
 
-# g = Graphs(['SNR','msn'], ['pursuit','saccade'], '/Users/shaigindin/MATY/Neural_Analyzer/files/out/EYES/',load_fragments=True)
-#
+g = Graphs(['SNR','msn'], ['pursuit','saccade'], '/Users/shaigindin/MATY/Neural_Analyzer/files/out/EYES/',load_fragments=True)
+
 # g.plot_fragments()
+# g.plot_experiments_same_populations()
+g.plot_acc_over_concat_cells()

@@ -214,8 +214,8 @@ class Graphs:
             for pop in self.__populations:
                 temp = []
                 for i in range(12):
-                    with open(self.__base_dir + exp + '_FRAGMENTS' + self.__slash +
-                              str.upper(pop) + '_' + str(i), 'rb') as info_file:
+                    with open(self.__base_dir + exp.upper() + '_FRAGMENTS' + self.__slash +
+                              str.upper(pop)  + str(i), 'rb') as info_file:
                         info = pickle.load(info_file)
                         temp.append(self.creates_data_frag(info))
                 all[index].append(temp)
@@ -226,8 +226,8 @@ class Graphs:
             for pop in self.__populations:
                 temp2 = []
                 for i in range(12):
-                    with open(self.__base_dir + exp + '_FRAGMENTS' + self.__slash +
-                              str.upper(pop) + '_' + str(i), 'rb') as info_file:
+                    with open(self.__base_dir + exp.upper() + '_FRAGMENTS' + self.__slash +
+                              str.upper(pop) + str(i), 'rb') as info_file:
                         info = pickle.load(info_file)
                         temp2.append(self.create_std_data_frag(info))
                 all2[index].append(temp2)
