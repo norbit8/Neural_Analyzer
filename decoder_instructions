@@ -1,0 +1,51 @@
+Instructions:
+preparations
+first you need to convert matlab files to csv. in order to do so,
+arrange in input folder as such:
+input_folder -> 1) eyes (folder) -> 1.1) pursuit (folder) -> 1.1.1) put your pursuit files here
+                                 -> 1.2) saccade (folder) -> 1.2.1) put your saccade files here
+
+             -> 2) rewards (folder) -> 2.1) pursuit (folder) -> 1.1.1) put your pursuit files here
+                                    -> 2.2) saccade (folder) -> 1.2.1) put your saccade files here
+
+PAY ATTENTION - all the matlab file names has to be in this matter population name in CAPITAL letters underscore name of cell
+for example CS_4985.mat or MSN _4547.mat.
+
+now, you can create an instance of decoder, for example:
+
+a = decoder(path for input directory, path for output directory, ['SNR','msn',CRB])
+it means that this decoder will convert snr msn and crb files only.
+
+now to convert matlab to csv call the convert_matlab_to_csv function for example:
+
+a.convert_matlab_to_csv(exp="eyes", pop=1) -> this call will convert all the 'SNR','msn',CRB files
+                                              from input_directory/eyes/saccade/ to output_directory/eyes/SACCADE/
+
+this command will
+a.convert_matlab_to_csv(exp="rewards", pop=0) -> this call will convert all the 'SNR','msn',CRB files
+                                                 from input_directory/rewards/saccade/ to output_directory/eyes/PURSUIT/
+
+if you want to add another popultaion for exanple 'tan', you can press the following command:
+a.population_names.append("tan")
+
+after finished prepations,
+you can run the knn algorithim.
+
+if you want to run for example, the knn algorithm oh the eyes experment on the pursuit with only CRB population
+do as follows:
+
+#set the population names
+a.population_names  = ['CRB']
+a.simple_knn_eyes(type = 0) (0 means that it is pursuit)
+
+the results will appear in the file located in output_directory/EYES/PURSUIT/CRB
+
+if you want to run algorithim on msn and snr and create fragments result file
+do as follows:
+
+a.population_names  = ['msn', 'SNR']
+a.simple_knn_eye_fregment(1)
+
+the results will appear in the file located in output_directory/EYES/SACCADE_FRAGMENTS/files...
+
+
