@@ -1,23 +1,13 @@
 # -=-=-=-=-=-=--=-=-=-= IMPORTS =-=-=-=-=-=-=--
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.utils import resample
 from scipy.ndimage import gaussian_filter
-from scipy import ndimage
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score
 import fnmatch
 import os
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 import random
-from sklearn.svm import SVC
 import pickle
 from scipy.io import loadmat
-from pandas import DataFrame
 from typing import List
 from graphs import *
 
@@ -28,17 +18,17 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 50  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 30  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 30  # number of iteration on each K-population of cells.
-    K = 48  # number of files per time
+    TIMES = 1  # number of iteration on each K-population of cells.
+    K = 1  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
     SAMPLES_LOWER_BOUND = 102  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
-
+    step = 3
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
@@ -84,7 +74,6 @@ class decoder(object):
             cells += self.filter_cells(cell_names, name)
         for cell in cells:
             DATA_LOC = dir + cell  # cell file location
-
             data = loadmat(DATA_LOC)  # loading the matlab data file to dict
             if (exp == "eyes"):
                 tg_dir = data['data']['target_direction'][0][0][0] / 45
@@ -280,10 +269,11 @@ class decoder(object):
         # loading folder
         all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
         all_cell_names.sort()
+        print(all_cell_names)
         for population in [x for x in self.population_names if x not in self.loadFromLogger(type)]:
             cell_names = self.filter_cells(all_cell_names, population)
             cell_names = self.filterCellsbyRows(cell_names)
-
+            print(cell_names)
             # build list which saves info
             info = []
 
@@ -294,7 +284,7 @@ class decoder(object):
             sums = []
             classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
             # iterating over k-population of cells from 1 to K
-            for number_of_cells in range(1, self.K + 1):
+            for number_of_cells in range(1, self.K + 1, self.step):
                 # saves each groupCells
                 infoPerGroupOfCells = []
 
@@ -321,6 +311,7 @@ class decoder(object):
                     totalAv += sum1 / self.NUMBER_OF_ITERATIONS
                     scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
                     infoPerGroupOfCells.append(scoreForCells)
+                print(population, number_of_cells, totalAv / self.TIMES)
                 info.append((infoPerGroupOfCells, totalAv / self.TIMES))
                 sums.append(totalAv / self.TIMES)
             self.savesInfo(info, population, "")
@@ -377,7 +368,7 @@ class decoder(object):
                 sums = []
                 info = []
                 segment = i
-                for number_of_cells in range(1, K + 1):
+                for number_of_cells in range(1, K + 1, self.step):
                     # saves each groupCells
                     infoPerGroupOfCells = []
 
@@ -463,7 +454,7 @@ class decoder(object):
             sums = []
             classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
             # iterating over k-population of cells from 1 to K
-            for number_of_cells in range(1, self.K + 1):
+            for number_of_cells in range(1, self.K + 1, self.step):
                 # saves each groupCells
                 infoPerGroupOfCells = []
 
@@ -495,16 +486,20 @@ class decoder(object):
             self.savesInfo(info, population, "")
             self.saveToLogger(population + "_" + self.d[type] + "_REWARDS", type)
 
-a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin/MATY/Neural_Analyzer/files/out', ['SNR','msn'])
 
-# a.convert_matlab_to_csv(exp="eyes", pop=1)
-# a.convert_matlab_to_csv(exp="rewards", pop=1)
 
-# a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in/saccade','/Users/shaigindin/MATY/Neural_Analyzer/files/out/', ['SNR','msn'])
+# a = decoder('/home/rachel/Neural_Analyzer/files/in','/home/rachel/Neural_Analyzer/files/out', ['SNR','msn','CRB','cs'])
+
+# a.convert_matlab_to_csv(exp="eyes", pop=0)
 # a.convert_matlab_to_csv(exp="eyes", pop=1)
+#
+#
 
 # a.simple_knn_eyes(0)
+# a.simple_knn_eyes(1)
+#
 # a.simple_knn_eye_fregment(0)
+# a.simple_knn_eye_fregment(1)
 
 # a.simple_knn_eyes(1)
 # a.simple_knn_eyes(1)
@@ -517,8 +512,30 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin
 
 
 
-g = Graphs(['SNR','msn'], ['pursuit','saccade'], '/Users/shaigindin/MATY/Neural_Analyzer/files/out/EYES/',load_fragments=True)
-
+# g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/home/rachel/Neural_Analyzer/files/out/EYES/',
+#            fragments_cells=[0,4,7,9],load_fragments=True)
+#
 # g.plot_fragments()
 # g.plot_experiments_same_populations()
-g.plot_acc_over_concat_cells()
+# g.plot_acc_over_concat_cells()
+
+
+
+
+
+
+# dir =   "/home/rachel/Neural_Analyzer/files/in/eyes/saccade/"
+# all_cell_names = fnmatch.filter(os.listdir(dir), '*.mat')
+#
+# for name in all_cell_names:
+#      # print(name)
+#
+#      #makes file name captial
+#      l = name.split('.')
+#      newName = l[0].upper() + "." + l[1]
+#      #
+#      #reduce PC and BG in the begining
+#      # newName = name[3:]
+#      os.rename(dir  + name, dir + newName)
+#
+#      # prirnt(newName)
