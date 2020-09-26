@@ -18,17 +18,17 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 50  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 100  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 30  # number of iteration on each K-population of cells.
-    K = 1  # number of files per time
+    TIMES = 20  # number of iteration on each K-population of cells.
+    K = 48  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
     SAMPLES_LOWER_BOUND = 100  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
-    step = 1
+    step = 4
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
@@ -254,6 +254,38 @@ class decoder(object):
                 temp.append(cell_name)
         return temp
 
+    def control_group_cells(self, path):
+        """
+        inner function. check the simple knn algorithm validty.
+        run only one cell each time and print the results
+        path - absoult path os the folder containing the cells
+        """
+        self.temp_path_for_reading = path
+        results = 0
+        # loading folder
+        all_cell_names = fnmatch.filter(os.listdir(path), '*.csv')
+        all_cell_names.sort()
+        print(all_cell_names)
+        classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
+        for cell in all_cell_names:
+            # save the names of the cells and the score
+            sum1 = 0
+            # choose random K cells
+            sampeling = [cell,]
+            loadFiles = self.readFromDisk(sampeling)
+            for i in range(self.NUMBER_OF_ITERATIONS):
+                X_train, X_test = self.mergeSampeling1(loadFiles)
+                y_train, y_test = self.getTestVectors()
+
+                classifier.fit(X_train, y_train)
+                y_pred2 = classifier.predict(X_test)
+                sum1 += accuracy_score(y_test, y_pred2)
+            print(cell, sum1 / self.NUMBER_OF_ITERATIONS)
+            results += sum1 / self.NUMBER_OF_ITERATIONS
+        print(results / len(all_cell_names))
+
+
+
     def simple_knn_eyes(self, type: int):
         """
         @param type: should be 0 for persuit or 1 for  saccade
@@ -273,7 +305,6 @@ class decoder(object):
         for population in [x for x in self.population_names if x not in self.loadFromLogger(type)]:
             cell_names = self.filter_cells(all_cell_names, population)
             cell_names = self.filterCellsbyRows(cell_names)
-            print(cell_names)
             # build list which saves info
             info = []
 
@@ -481,22 +512,25 @@ class decoder(object):
                     totalAv += sum1 / self.NUMBER_OF_ITERATIONS
                     scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
                     infoPerGroupOfCells.append(scoreForCells)
+                print(population, number_of_cells, totalAv / self.TIMES)
                 info.append((infoPerGroupOfCells, totalAv / self.TIMES))
                 sums.append(totalAv / self.TIMES)
             self.savesInfo(info, population, "")
             self.saveToLogger(population + "_" + self.d[type] + "_REWARDS", type)
 
 
-
-# a = decoder('/home/rachel/Neural_Analyzer/files/in','/home/rachel/Neural_Analyzer/files/out', ['SNR','msn','CRB','cs'])
-
-# a.convert_matlab_to_csv(exp="eyes", pop=0)
-# a.convert_matlab_to_csv(exp="eyes", pop=1)
 #
-#
+# a = decoder('/home/rachel/Neural_Analyzer/files/in','/home/rachel/Neural_Analyzer/files/out',
+#             ['SNR','msn','CRB','cs'])
 
-# a.simple_knn_eyes(0)
-# a.simple_knn_eyes(1)
+# a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
+# a.convert_matlab_to_csv(exp="rewards", pop=0)
+# a.convert_matlab_to_csv(exp="rewards", pop=1)
+
+
+
+# a.simple_knn_rewards(0)
+# a.simple_knn_rewards(1)
 #
 # a.simple_knn_eye_fregment(0)
 # a.simple_knn_eye_fregment(1)
@@ -511,10 +545,10 @@ class decoder(object):
 
 
 
-
-# g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/home/rachel/Neural_Analyzer/files/out/EYES/',
-#            fragments_cells=[0,4,7,9],load_fragments=True)
 #
+# g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/home/rachel/Neural_Analyzer/files/out/EYES/',
+#            fragments_cells=[0,4,7,9],load_fragments=False)
+
 # g.plot_fragments()
 # g.plot_experiments_same_populations()
 # g.plot_acc_over_concat_cells()
@@ -522,9 +556,9 @@ class decoder(object):
 
 
 
-
-
-# dir =   "/home/rachel/Neural_Analyzer/files/in/eyes/saccade/"
+#
+#
+# dir =   "/home/rachel/Neural_Analyzer/files/in/rewards/pursuit/"
 # all_cell_names = fnmatch.filter(os.listdir(dir), '*.mat')
 #
 # for name in all_cell_names:
@@ -537,5 +571,5 @@ class decoder(object):
 #      #reduce PC and BG in the begining
 #      # newName = name[3:]
 #      os.rename(dir  + name, dir + newName)
-#
-#      # prirnt(newName)
+# #
+     # print(newName)
