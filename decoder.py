@@ -18,17 +18,17 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 30  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 50  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 1  # number of iteration on each K-population of cells.
+    TIMES = 30  # number of iteration on each K-population of cells.
     K = 1  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
-    SAMPLES_LOWER_BOUND = 102  # filter the cells with less than _ sampels
+    SAMPLES_LOWER_BOUND = 100  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
-    step = 3
+    step = 1
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
