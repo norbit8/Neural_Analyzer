@@ -18,20 +18,20 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
        
 **3)** Activate the environment like so:
 
-       conda activate neural_analyzer
+    conda activate neural_analyzer
 
 **4)** Now, we can run python:
 
-       python
+    python
        
 **5)** Import the modules:
 
-       Import decoder
-       Import graphs
+    Import decoder
+    Import graphs
 
 **6)** Create an instance of the decoder class and the graphs class:
 
-       dec = decoder.decoder(**kwargs)
-       g = graphs.graphs(**kwargs)
+    dec = decoder.decoder(**kwargs)
+    g = graphs.graphs(**kwargs)
        
 To see more information please use the ```dec.help()``` method, or ```g.help()``` method.
