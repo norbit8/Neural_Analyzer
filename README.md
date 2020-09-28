@@ -9,4 +9,4 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
 To recreate the environment you can do the following:
    ```conda env create -f environment.yml```
 
- <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/neuralSpikesExample.png" width="100" />
+ <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/neuralSpikesExample.png" width="500" />
