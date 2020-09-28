@@ -8,3 +8,5 @@ All of the work is based on machine learning algorithms (specifically KNN) which
 First, we suggest you to use `conda` in order to reconstruct our work environemnt. 
 To recreate the environment you can do the following:
    ```conda env create -f environment.yml```
+
+ <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/neuralSpikesExample.png" width="100" />
