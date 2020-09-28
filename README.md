@@ -35,3 +35,10 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
     g = graphs.graphs(**kwargs)
        
 To see more information please use the ```dec.help()``` method, or ```g.help()``` method.
+
+### Important notes:
+   
+   -Matlab files should look likes this "populationName#cellName for example CRB#4391.mat"
+   -When calling the class decoder, Make sure that the directory of the input data have the 
+    directories 'PURSUIT'/'SACCADE'/'PURSUIT_FRAGMENTS'/'SACCADE_FRAGMENTS'.
+   -For matching cells one should make sure that only the matching cells are in the input directories for the decoder.
