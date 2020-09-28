@@ -99,7 +99,8 @@ class Graphs:
                                     'population': pop,
                                     'experiment_type': self.__experiment_names[exp_index]},
                                    ignore_index=True)
-        # df.loc[(df['experiment_type'] == 'PURSUIT'), ['acc']] += 0.1
+        # df.loc[(df['experiment_type'] == 'PURSUIT'), ['acc']] += 0.1    # right
+        # df[(df['experiment_type'] == 'PURSUIT')]['acc'] += 0.1    # wrong
         self.__df = df
 
     def plot_acc_over_concat_cells(self, populations: List[str] = None,
