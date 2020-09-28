@@ -36,7 +36,7 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
        
 To see more information please use the ```dec.help()``` method, or ```g.help()``` method.
 
-### Important notes:
+### Important notes
    
 -Matlab files should look likes this "populationName#cellName for example CRB#4391.mat"
    
