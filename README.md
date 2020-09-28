@@ -32,7 +32,6 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
 **6)** Create an instance of the decoder class and the graphs class:
 
        ```dec = decoder.decoder(**kwargs)```
-       
        ```g = graphs.graphs(**kwargs)```
        
 To see more information please use the ```dec.help()``` method, or ```g.help()``` method.
