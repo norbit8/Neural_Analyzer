@@ -21,14 +21,14 @@ class decoder(object):
     NUMBER_OF_ITERATIONS = 100  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 20  # number of iteration on each K-population of cells.
+    TIMES = 30  # number of iteration on each K-population of cells.
     K = 48  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
     SAMPLES_LOWER_BOUND = 100  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
-    step = 4
+    step = 1
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
@@ -233,6 +233,7 @@ class decoder(object):
         loadFiles = []
         for cell_name in sampling:
             dataset = pd.read_csv(self.temp_path_for_reading + cell_name)
+            # print(dataset)
             X = dataset.iloc[:, cut_first: cut_last].values
             y = dataset.iloc[:, -1].values
             if EYES:
@@ -301,7 +302,6 @@ class decoder(object):
         # loading folder
         all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
         all_cell_names.sort()
-        print(all_cell_names)
         for population in [x for x in self.population_names if x not in self.loadFromLogger(type)]:
             cell_names = self.filter_cells(all_cell_names, population)
             cell_names = self.filterCellsbyRows(cell_names)
@@ -333,7 +333,7 @@ class decoder(object):
                     loadFiles = self.readFromDisk(sampeling)
                     for i in range(self.NUMBER_OF_ITERATIONS):
                         X_train, X_test = self.mergeSampeling1(loadFiles)
-                        y_train, y_test = self.getTestVectors()
+                        y_train, y_test = self.getTestVectors(8)
 
                         classifier.fit(X_train, y_train)
                         y_pred2 = classifier.predict(X_test)
@@ -519,15 +519,15 @@ class decoder(object):
             self.saveToLogger(population + "_" + self.d[type] + "_REWARDS", type)
 
 
-#
-# a = decoder('/home/rachel/Neural_Analyzer/files/in','/home/rachel/Neural_Analyzer/files/out',
-#             ['SNR','msn','CRB','cs'])
+## a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
 
-# a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
-# a.convert_matlab_to_csv(exp="rewards", pop=0)
+# a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in','/Users/shaigindin/MATY/Neural_Analyzer/files/out1',['SNR','msn','CRB','cs']
+# a.convert_matlab_to_csv(exp="eyes", pop=0)
 # a.convert_matlab_to_csv(exp="rewards", pop=1)
 
 
+# a.simple_knn_eyes(type=0)
+# a.simple_knn_eyes(1)
 
 # a.simple_knn_rewards(0)
 # a.simple_knn_rewards(1)
@@ -535,8 +535,6 @@ class decoder(object):
 # a.simple_knn_eye_fregment(0)
 # a.simple_knn_eye_fregment(1)
 
-# a.simple_knn_eyes(1)
-# a.simple_knn_eyes(1)
 
 # a.simple_knn_eye_fregment(1)
 # a.simple_knn_eyes(1)
@@ -545,14 +543,13 @@ class decoder(object):
 
 
 
-#
-# g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/home/rachel/Neural_Analyzer/files/out/EYES/',
-#            fragments_cells=[0,4,7,9],load_fragments=False)
 
+g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/Users/shaigindin/MATY/Neural_Analyzer/files/out/REWARDS/', fragments_cells=[0,4,7,9],load_fragments=False)
+#
 # g.plot_fragments()
 # g.plot_experiments_same_populations()
-# g.plot_acc_over_concat_cells()
-
+g.plot_acc_over_concat_cells()
+#
 
 
 
