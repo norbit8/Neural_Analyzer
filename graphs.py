@@ -153,6 +153,7 @@ class Graphs:
                   scale_x_discrete(breaks=range(0, number_of_concat_cells + 1, ticks)) +  # X axis leaving out some ticks
                   scale_y_continuous(breaks=np.arange(0, 1, 0.05)) +  # Y axis scaling
                   labs(x='Number of concatenated cells', y='Accuracy') +
+                  ggtitle('Population: ' + pop) +
                   theme_classic())
         return filtered_dataframe
 
@@ -315,10 +316,27 @@ class Graphs:
               " (*) get_fragments() - Getter for the fragments data. (Pandas DataFrame)")
 
 
-## EXAMPLES ###
-# g = Graphs(['SS', 'SNR', 'MSN', 'CRB'],
-#            ['PURSUIT', 'SACCADE'],
-#            '/home/mercydude/Desktop/Neural_Analyzer/out/',
-#            number_of_cells=30, load_fragments=True)
-#
+#####################################################################
+#                       FOR THE MEETING
+#####################################################################
+## EXAMPLES ##
+# from graphs import *
+# g = Graphs(['CRB', 'SS','CS','MSN', 'SNR'],['PURSUIT','SACCADE'], '/home/mercydude/Desktop/Neural_Analyzer/files/out/EYES', load_fragments=False)
+# g.plot_acc_over_concat_cells(ticks=5)  # argument ticks
 # g.plot_experiments_same_populations()
+
+## FRAGMENTS ##
+g = Graphs(['CRB','SS','MSN','SNR'],['PURSUIT','SACCADE'], '/home/mercydude/Desktop/Neural_Analyzer/files/out/EYES', load_fragments=True)
+#
+g.plot_fragments()
+
+# g.help()
+
+## GETTERS:
+
+# g.get_fragments()
+# g.data_acc_over_concat_cells()
+#
+#####################################################################
+#                               END
+#####################################################################
