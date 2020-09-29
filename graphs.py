@@ -326,9 +326,9 @@ class Graphs:
 # g.plot_experiments_same_populations()
 
 ## FRAGMENTS ##
-g = Graphs(['CRB','SS','MSN','SNR'],['PURSUIT','SACCADE'], '/home/mercydude/Desktop/Neural_Analyzer/files/out/EYES', load_fragments=True)
+# g = Graphs(['CRB','SS','MSN','SNR'],['PURSUIT','SACCADE'], '/home/mercydude/Desktop/Neural_Analyzer/files/out/EYES', load_fragments=True)
 #
-g.plot_fragments()
+# g.plot_fragments()
 
 # g.help()
 
