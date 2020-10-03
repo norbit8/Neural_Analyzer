@@ -11,7 +11,7 @@ from scipy.io import loadmat
 from typing import List
 from graphs import *
 
-MSG = "Choose folders to cncert its files to csv"
+MSG = "Choose folders to cnvert its files to csv"
 
 RUNNING_THE_TEST = "Choose folders for running the test"
 
@@ -25,17 +25,18 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 50  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 1  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 10  # number of iteration on each K-population of cells.
-    K = 45  # number of files per time
+    TIMES = 1  # number of iteration on each K-population of cells.
+    K = 6  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
     SAMPLES_LOWER_BOUND = 100  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
     step = 5
+    __algo_names = ["simple_knn", "simple_knn_fregments"]
 
     def __init__(self, input_dir: str, output_dir: str, population_names: List[str]):
         """
@@ -48,8 +49,11 @@ class decoder(object):
         self.__output_dir = os.path.join(output_dir, '')
         self.population_names = [x.upper() for x in population_names]
         self.__temp_path_for_writing = output_dir
-
-
+        self.__files = dict()
+        self.ALGOS = {
+            "simple_knn": self.simple_knn,
+            "simple_knn_fregments": self.simple_knn_eye_fregment
+        }
     def filter_cells(self, cell_names, name):
         """
         remove from list the names which not conatin name string
@@ -277,17 +281,29 @@ class decoder(object):
             testMatriceCombined.append(testSampelsMatrice)
         return np.hstack(TrainAvgMatricesCombined), np.hstack(testMatriceCombined)
 
-    def get_y_axis_from_disk(self, path, y_axis_key):
-        with open(path, 'rb') as info_file:
-            info = pickle.load(info_file)
-            return info[y_axis_key]
+    def get_y_axis_from_disk(self, path, name, y_axis_key):
+        try:
+            return self.__files[name][y_axis_key]
+        except:
+            with open(path + name, 'rb') as info_file:
+                info = pickle.load(info_file)
+                self.__files[name] = info
+                return info[y_axis_key]
 
     def clean_name(self,name):
         name = name[name.find("#") + 1:]
         name = name[:name.find(".")]
         return name
 
-    def readFromDisk(self, sampling, y_axis_key, is_fragments=False, segment=0, EYES = True, ):
+    def read_from_disk_or_dictionary(self, path, cell_name):
+        try:
+            return self.__files[cell_name]
+        except:
+            data =  pd.read_csv(path + cell_name)
+            self.__files[cell_name] = data
+            return data
+
+    def readFromDisk(self, sampling, y_axis_key, is_fragments=False, segment=0, DIRECTION = True, ):
         """
 
         @param sampling: the names of the cells to read together and create one matrice
@@ -305,10 +321,10 @@ class decoder(object):
 
         loadFiles = []
         for cell_name in sampling:
-            dataset = pd.read_csv(self.temp_path_for_reading + cell_name)
+            dataset = self.read_from_disk_or_dictionary(self.temp_path_for_reading , cell_name)
             X = dataset.iloc[:, cut_first: cut_last].values
-            y = self.get_y_axis_from_disk(self.temp_path_for_reading + "." + self.clean_name(cell_name), y_axis_key)
-            if EYES:
+            y = self.get_y_axis_from_disk(self.temp_path_for_reading , "." + self.clean_name(cell_name), y_axis_key)
+            if DIRECTION:
                 X = self.filterWithGaussian(X)
             loadFiles.append((X, y))
         return loadFiles
@@ -370,16 +386,54 @@ class decoder(object):
 
     def get_y_axis_column(self, common_y_axis):
         common_y_axis = list(common_y_axis)
-        print("choose the dependent value:")
+        print("choose the dependent value\s:")
         for i, y in enumerate(common_y_axis):
             print(i + 1, ") ", y)
-        input_val = int(input("enter the number of the depedent value\n"))
-        if input_val not in [i+1 for i in list(range(len(common_y_axis)))]:
-            print("not a valid input")
-            exit(1)
-        return common_y_axis[input_val -1]
+        input_string = input("enter the number of the depedent value\n")
+        userList = [int(i) for i in input_string.split()]
+        for i in userList:
+            if i-1 not in list(range(len(common_y_axis))):
+                print(i,"is not a valid index")
+                return
+        return [common_y_axis[i-1] for i in userList]
 
-    def analyze(self, project_name:str, algo:int):
+
+
+    def one_cell_session(self, all_cell_names, y_axis):
+        results = 0
+        classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
+        results_list = []
+        for cell in all_cell_names:
+            # save the names of the cells and the score
+            sum1 = 0
+            # choose random K cells
+            sampeling = [cell, ]
+            loadFiles = self.readFromDisk(sampeling, y_axis)
+            for i in range(self.NUMBER_OF_ITERATIONS):
+                X_train, X_test = self.mergeSampeling1(loadFiles)
+                number_of_unique_labels = len(np.unique(loadFiles[0][1]))
+                y_train, y_test = self.getTestVectors(number_of_unique_labels)
+                classifier.fit(X_train, y_train)
+                y_pred2 = classifier.predict(X_test)
+                sum1 += accuracy_score(y_test, y_pred2)
+            results_list.append((cell, sum1 / self.NUMBER_OF_ITERATIONS))
+            results += sum1 / self.NUMBER_OF_ITERATIONS
+        totalAv = results / len(all_cell_names)
+        return results_list, totalAv
+
+    def get_algos(self):
+        print("Choose the Algorithims")
+        for i,algo in enumerate(self.__algo_names):
+            print(i+1,") ", algo)
+        input_string = input("enter all the algos numbers with space between them\n")
+        userList = [int(i) for i in input_string.split()]
+        for i in userList:
+            if i-1 not in list(range(len(self.__algo_names))):
+                print("no such dircetory, input invalid")
+                return
+        return [self.__algo_names[i-1] for i in userList]
+
+    def analyze(self, project_name:str):
         """
         @param type: should be 0 for persuit or 1 for  saccade
         @return:
@@ -391,65 +445,83 @@ class decoder(object):
         folders = self.ask_for_dirs(path, RUNNING_THE_TEST)
         common_y_axis = self.get_common_y_axis(folders, path)
 
-        y_axis_key = self.get_y_axis_column(common_y_axis)
-        for folder in folders:
-            basename_folder = os.path.basename(os.path.dirname(folder))
-            inner_folder = os.path.basename(folder)
-            self.temp_path_for_reading = folder + "/"
-            self.createDirectory(basename_folder +  "/" + inner_folder)
-            # loading folder
-            all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
-            all_cell_names.sort()
-            for population in [x for x in self.population_names if x not in self.loadFromLogger()]:
-                cell_names = self.filter_cells(all_cell_names, population)
-                cell_names = self.filterCellsbyRows(cell_names)
-                # build list which saves info
-                info = []
+        y_axis_keys = self.get_y_axis_column(common_y_axis)
 
-                if (self.K > len(cell_names) - 1):
-                    self.K = len(cell_names) - 1
+        algos = self.get_algos()
+        for algo in algos:
+            self.ALGOS[algo](y_axis_keys, folders)
 
-                # saves the rate of the success for each k population
-                sums = []
-                classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
-                # iterating over k-population of cells from 1 to K
-                for number_of_cells in range(1, self.K + 1, self.step):
-                    # saves each groupCells
-                    infoPerGroupOfCells = []
+    def simple_knn(self, y_axis_keys, folders):
+        for y_axis_key in y_axis_keys:
+            for folder in folders:
+                basename_folder = os.path.basename(os.path.dirname(folder))
+                inner_folder = os.path.basename(folder)
+                self.temp_path_for_reading = folder + "/"
+                self.createDirectory( basename_folder +  "/" + y_axis_key + "/" + inner_folder + "/simple_knn/")
+                # loading folder
+                all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
+                all_cell_names.sort()
+                #empty files cach
+                self.__files = dict()
 
-                    # intializing counter
-                    totalAv = 0
+                for population in [x for x in self.population_names if x not in self.loadFromLogger()]:
+                    cell_names = self.filter_cells(all_cell_names, population)
+                    cell_names = self.filterCellsbyRows(cell_names)
+                    # build list which saves info
+                    info = []
 
-                    # iterating TImes for solid average
-                    for j in range(self.TIMES):
-                        # save the names of the cells and the score
-                        scoreForCells = []
+                    if (self.K > len(cell_names) - 1):
+                        self.K = len(cell_names) - 1
 
-                        sum1 = 0
-                        # choose random K cells
-                        sampeling = random.sample(cell_names, k=number_of_cells)
-                        loadFiles = self.readFromDisk(sampeling,y_axis_key)
-                        for i in range(self.NUMBER_OF_ITERATIONS):
-                            X_train, X_test = self.mergeSampeling1(loadFiles)
-                            number_of_unique_labels = len(np.unique(loadFiles[0][1]))
-                            y_train, y_test = self.getTestVectors(number_of_unique_labels)
+                    # saves the rate of the success for each k population
+                    sums = []
+                    classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
+                    # iterating over k-population of cells from 1 to K
+                    for number_of_cells in range(1, self.K + 1, self.step):
+                        if number_of_cells == 1:
+                            print(y_axis_key)
+                            infoPerGroupOfCells, totalAv = self.one_cell_session(cell_names, y_axis_key)
+                            print(population, number_of_cells, totalAv)
+                            info.append((infoPerGroupOfCells, totalAv))
+                        else:
+                            # saves each groupCells
+                            infoPerGroupOfCells = []
 
-                            classifier.fit(X_train, y_train)
+                            # intializing counter
+                            totalAv = 0
 
-                            # check algo validty
-                            # np.random.shuffle(y_test)
+                            # iterating TImes for solid average
+                            for j in range(self.TIMES):
+                                # save the names of the cells and the score
+                                scoreForCells = []
 
-                            y_pred2 = classifier.predict(X_test)
-                            sum1 += accuracy_score(y_test, y_pred2)
+                                sum1 = 0
+                                # choose random K cells
+                                sampeling = random.sample(cell_names, k=number_of_cells)
+                                loadFiles = self.readFromDisk(sampeling,y_axis_key)
+                                for i in range(self.NUMBER_OF_ITERATIONS):
+                                    X_train, X_test = self.mergeSampeling1(loadFiles)
+                                    number_of_unique_labels = len(np.unique(loadFiles[0][1]))
+                                    y_train, y_test = self.getTestVectors(number_of_unique_labels)
 
-                        totalAv += sum1 / self.NUMBER_OF_ITERATIONS
-                        scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
-                        infoPerGroupOfCells.append(scoreForCells)
-                    print(population, number_of_cells, totalAv / self.TIMES)
-                    info.append((infoPerGroupOfCells, totalAv / self.TIMES))
-                    sums.append(totalAv / self.TIMES)
-                self.savesInfo(info, population, "")
-                self.saveToLogger(population)
+                                    classifier.fit(X_train, y_train)
+
+                                    # check algo validty
+                                    # np.random.shuffle(y_test)
+
+                                    y_pred2 = classifier.predict(X_test)
+                                    sum1 += accuracy_score(y_test, y_pred2)
+
+                                totalAv += sum1 / self.NUMBER_OF_ITERATIONS
+                                scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
+                                infoPerGroupOfCells.append(scoreForCells)
+
+                            print(population, number_of_cells, totalAv / self.TIMES)
+                            info.append((infoPerGroupOfCells, totalAv / self.TIMES))
+
+                    self.savesInfo(info, population, "")
+                    self.saveToLogger(population)
+
 
     def createDirectory(self, name):
         if not os.path.exists(self.__output_dir + name):
@@ -530,7 +602,7 @@ class decoder(object):
                     self.savesInfo(info, population,  str(segment))
             self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
 
-    def file_namechanget(self, path):
+    def file_name_changer(self, path):
         """
         helper func for name changing
         @param path:
@@ -568,8 +640,8 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
             '/Users/shaigindin/MATY/Neural_Analyzer/files/out1',['SNR'])
 
 # for eyes: target_direction , for rewards: reward_probability
-a.convert_matlab_to_csv_temp(exp="project_name")
-a.analyze(project_name = "project_name", algo=0)
+# a.convert_matlab_to_csv_temp(exp="project_name")
+a.analyze(project_name = "project_name")
 # print(a.get_y_axis_values('/Users/shaigindin/MATY/Neural_Analyzer/files/out1/csv_files/project_name/pur/'))
 # a.convert_matlab_to_csv_temp(exp="moshe", y_axis_name='target_direction' ,pop=0)
 # a.analyze(project_name="moshe", algo = 0, type_of_popylation = 0)
@@ -599,200 +671,3 @@ a.analyze(project_name = "project_name", algo=0)
 # g.plot_experiments_same_populations()
 # g.plot_acc_over_concat_cells()
 #
-
-
-
-
-
-#
-# *****************************
-# *****************************
-# *****************************
-# *****************************
-# *****************************
-# *****************************
-
-#
-#
-# dir =   "/home/rachel/Neural_Analyzer/files/in/rewards/pursuit/"
-# all_cell_names = fnmatch.filter(os.listdir(dir), '*.mat')
-#
-# for name in all_cell_names:
-#      # print(name)
-#
-#      #makes file name captial
-#      l = name.split('.')
-#      newName = l[0].upper() + "." + l[1]
-#      #
-#      #reduce PC and BG in the begining
-#      # newName = name[3:]
-#      os.rename(dir  + name, dir + newName)
-# #
-     # print(newName)
-
-
-# def simple_knn_rewards(self, type: int):
-#     """
-#     @param type: should be 0 for persuit or 1 for  saccade
-#     @return:
-#     """
-#
-#     if (type not in [0, 1]):
-#         print("type should be 0 if pursuit or 1 is saccade")
-#         return
-#
-#     self.temp_path_for_reading = self.__output_dir + "csv_files/rewards/" + self.d[type] + "/"
-#     self.createDirectory("REWARDS/" + self.d[type])
-#
-#     # loading folder
-#     all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
-#     all_cell_names.sort()
-#     for population in [x for x in self.population_names if x not in self.loadFromLogger(type)]:
-#
-#         cell_names = self.filter_cells(all_cell_names, population)
-#         cell_names = self.filterCellsbyRows(cell_names)
-#
-#         # build list which saves info
-#         info = []
-#
-#         if (self.K > len(cell_names) - 1):
-#             self.K = len(cell_names) - 1
-#
-#         # saves the rate of the success for each k population
-#         sums = []
-#         classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
-#         # iterating over k-population of cells from 1 to K
-#         for number_of_cells in range(1, self.K + 1, self.step):
-#             # saves each groupCells
-#             infoPerGroupOfCells = []
-#
-#             # intializing counter
-#             totalAv = 0
-#
-#             # iterating TImes for solid average
-#             for j in range(self.TIMES):
-#                 # save the names of the cells and the score
-#                 scoreForCells = []
-#
-#                 sum1 = 0
-#                 # choose random K cells
-#                 sampeling = random.sample(cell_names, k=number_of_cells)
-#                 loadFiles = self.readFromDisk(sampeling)
-#                 for i in range(self.NUMBER_OF_ITERATIONS):
-#                     X_train, X_test = self.mergeSampeling1(loadFiles)
-#                     y_train, y_test = self.getTestVectors(type=2)
-#                     X_train = gaussian_filter(X_train, sigma = self.SIGMA)
-#                     classifier.fit(X_train, y_train)
-#                     y_pred2 = classifier.predict(X_test)
-#
-#                     sum1 += accuracy_score(y_test, y_pred2)
-#
-#                 totalAv += sum1 / self.NUMBER_OF_ITERATIONS
-#                 scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
-#                 infoPerGroupOfCells.append(scoreForCells)
-#             print(population, number_of_cells, totalAv / self.TIMES)
-#             info.append((infoPerGroupOfCells, totalAv / self.TIMES))
-#             sums.append(totalAv / self.TIMES)
-#         self.savesInfo(info, population, "")
-#         self.saveToLogger(population + "_" + self.d[type] + "_REWARDS", type)
-
-
-# def simple_knn_eyes(self, type: int):
-#     """
-#     @param type: should be 0 for persuit or 1 for  saccade
-#     @return:
-#     """
-#     if (type not in [0, 1]):
-#         print("type should be 0 if pursuit or 1 is saccade")
-#         return
-#
-#     self.temp_path_for_reading = self.__output_dir + "csv_files/eyes/" + self.d[type] + "/"
-#     self.createDirectory("EYES/" + self.d[type])
-#
-#     # loading folder
-#     all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
-#     all_cell_names.sort()
-#     for population in [x for x in self.population_names if x not in self.loadFromLogger(type)]:
-#         cell_names = self.filter_cells(all_cell_names, population)
-#         cell_names = self.filterCellsbyRows(cell_names)
-#         # build list which saves info
-#         info = []
-#
-#         if (self.K > len(cell_names) - 1):
-#             self.K = len(cell_names) - 1
-#
-#         # saves the rate of the success for each k population
-#         sums = []
-#         classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
-#         # iterating over k-population of cells from 1 to K
-#         for number_of_cells in range(1, self.K + 1, self.step):
-#             # saves each groupCells
-#             infoPerGroupOfCells = []
-#
-#             # intializing counter
-#             totalAv = 0
-#
-#             # iterating TImes for solid average
-#             for j in range(self.TIMES):
-#                 # save the names of the cells and the score
-#                 scoreForCells = []
-#
-#                 sum1 = 0
-#                 # choose random K cells
-#                 sampeling = random.sample(cell_names, k=number_of_cells)
-#                 loadFiles = self.readFromDisk(sampeling)
-#                 for i in range(self.NUMBER_OF_ITERATIONS):
-#                     X_train, X_test = self.mergeSampeling1(loadFiles)
-#                     y_train, y_test = self.getTestVectors(8)
-#
-#                     classifier.fit(X_train, y_train)
-#                     y_pred2 = classifier.predict(X_test)
-#                     sum1 += accuracy_score(y_test, y_pred2)
-#
-#                 totalAv += sum1 / self.NUMBER_OF_ITERATIONS
-#                 scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
-#                 infoPerGroupOfCells.append(scoreForCells)
-#             print(population, number_of_cells, totalAv / self.TIMES)
-#             info.append((infoPerGroupOfCells, totalAv / self.TIMES))
-#             sums.append(totalAv / self.TIMES)
-#         self.savesInfo(info, population, "")
-#         self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
-
-#
-# def convert_matlab_to_csv(self, exp, pop):
-#     """
-#     The expirement data is provided in the form of a MATLAB file, thus some pre-processing is needed
-#     in order to convert it to a more useable data-structre, in particular numpy array.
-#     Note that we convert the MATLAB file data to a pandas DataFrame and then we save it to a csv
-#     file for easier access in the future.
-#     @param exp:
-#     @param pop: 0 for pursuit 1 for saccade
-#     @return:
-#     """
-#     if (exp != "eyes" and exp != "rewards"):
-#         print("exp argument should be eyes or rewards only")
-#         return
-#     dir = self.__input_dir + exp + "/" + self.d[pop].lower() + "/"
-#     cell_names = fnmatch.filter(os.listdir(dir), '*.mat')  # filtering only the mat files.
-#     cell_names.sort()  # sorting the names of the files in order to create consistent runs.
-#     cells = []
-#     for name in self.population_names:
-#         cells += self.filter_cells(cell_names, name)
-#     for cell in cells:
-#         DATA_LOC = dir + cell  # cell file location
-#         data = loadmat(DATA_LOC)  # loading the matlab data file to dict
-#         if (exp == "eyes"):
-#             tg_dir = data['data']['target_direction'][0][0][0] / 45
-#         elif (exp == 'rewards'):
-#             tg_dir = data['data']['reward_probability'][0][0][0]
-#             tg_dir[tg_dir == 75] = 1
-#             tg_dir[tg_dir == 25] = 0
-#         spikes = data['data']['spikes'][0][0].todense().transpose()
-#         # tg_time = data['data']['target_motion'][0][0][0]
-#         mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
-#         # saving the data to a csv file, and concatenating the number of samples from each file.
-#         if exp == "eyes":
-#             self.createDirectory("csv_files/eyes/" + self.d[pop] + "/")
-#         else:
-#             self.createDirectory("csv_files/rewards/" + self.d[pop] + "/")
-#         DataFrame(mat).to_csv(self.__temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
