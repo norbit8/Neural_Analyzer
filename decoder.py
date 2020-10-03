@@ -11,6 +11,10 @@ from scipy.io import loadmat
 from typing import List
 from graphs import *
 
+MSG = "Choose folders to cncert its files to csv"
+
+RUNNING_THE_TEST = "Choose folders for running the test"
+
 LAST_COLUMN = -1
 
 
@@ -21,7 +25,7 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 10  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 50  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
     TIMES = 10  # number of iteration on each K-population of cells.
@@ -56,47 +60,10 @@ class decoder(object):
         return list(
             filter(lambda cell_name: True if cell_name.find(name) != -1 else False, [x.split(".")[0].upper() + "." + x.split(".")[1] for x in cell_names]))
 
-    def convert_matlab_to_csv(self, exp, pop):
-        """
-        The expirement data is provided in the form of a MATLAB file, thus some pre-processing is needed
-        in order to convert it to a more useable data-structre, in particular numpy array.
-        Note that we convert the MATLAB file data to a pandas DataFrame and then we save it to a csv
-        file for easier access in the future.
-        @param exp:
-        @param pop: 0 for pursuit 1 for saccade
-        @return:
-        """
-        if (exp != "eyes" and exp !="rewards"):
-            print("exp argument should be eyes or rewards only")
-            return
-        dir = self.__input_dir + exp + "/" + self.d[pop].lower() + "/"
-        cell_names = fnmatch.filter(os.listdir(dir), '*.mat')  # filtering only the mat files.
-        cell_names.sort()  # sorting the names of the files in order to create consistent runs.
-        cells = []
-        for name in self.population_names:
-            cells += self.filter_cells(cell_names, name)
-        for cell in cells:
-            DATA_LOC = dir + cell  # cell file location
-            data = loadmat(DATA_LOC)  # loading the matlab data file to dict
-            if (exp == "eyes"):
-                tg_dir = data['data']['target_direction'][0][0][0] / 45
-            elif (exp == 'rewards'):
-                tg_dir = data['data']['reward_probability'][0][0][0]
-                tg_dir[tg_dir == 75] = 1
-                tg_dir[tg_dir == 25] = 0
-            spikes = data['data']['spikes'][0][0].todense().transpose()
-            # tg_time = data['data']['target_motion'][0][0][0]
-            mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
-            # saving the data to a csv file, and concatenating the number of samples from each file.
-            if exp == "eyes":
-                self.createDirectory("csv_files/eyes/" + self.d[pop] + "/")
-            else:
-                self.createDirectory("csv_files/rewards/" + self.d[pop] + "/")
-            DataFrame(mat).to_csv(self.__temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
 
-    def ask_for_dirs(self, path: str):
+    def ask_for_dirs(self, path: str, msg):
         subfolders = [f.path for f in os.scandir(path) if f.is_dir()]
-        print("choose folders to cncert its files to csv")
+        print(msg)
         for i,folder in enumerate(subfolders):
             print(i+1,") ", folder)
         input_string = input("enter all the folders number with space between them\n")
@@ -108,7 +75,7 @@ class decoder(object):
         return [subfolders[i-1] for i in userList]
 
 
-    def convert_matlab_to_csv_temp(self, exp:str , y_axis_name:str):
+    def convert_matlab_to_csv_temp(self, exp:str ):
         """
         The expirement data is provided in the form of a MATLAB file, thus some pre-processing is needed
         in order to convert it to a more useable data-structre, in particular numpy array.
@@ -119,7 +86,7 @@ class decoder(object):
         @return:
         """
         path = self.__input_dir + exp + "/"
-        folders = self.ask_for_dirs(path)
+        folders = self.ask_for_dirs(path, MSG)
         for folder in folders:
 
             cell_names = fnmatch.filter(os.listdir(folder), '*.mat')  # filtering only the mat files.
@@ -127,33 +94,65 @@ class decoder(object):
             basename_folder = os.path.basename(os.path.dirname(folder))
             inner_folder = os.path.basename(folder)
 
+            read_first_cell_in_kind = True
+
             for name in self.population_names:
                 cells = self.filter_cells(cell_names, name)
                 first_cell = True
                 d=dict()
+                y_axis_dict = dict()
+
+
+
                 #need to create dictionary for labels to indices
                 for cell in cells:
                     DATA_LOC = folder + "/" + cell  # cell file location
                     data = loadmat(DATA_LOC)  # loading the matlab data file to dict
-
-                    y_axis = data['data'][y_axis_name][0][0][0]
-                    unique_values = np.unique(y_axis)
-                    if (first_cell):
-                        firstcell = False
-                        for i, key in enumerate(unique_values):
-                            d[key]=i
-                    else:
-                       if (len(unique_values) != len(d.keys())):
-                           print("cell ", cell, " isnt valid because it has not all labels")
-                           return
-
-                    y_axis = np.array([d[label] for label in y_axis])
-
                     spikes = data['data']['spikes'][0][0].todense().transpose()
-                    mat = np.hstack([spikes, y_axis.reshape(len(y_axis), 1)])
+                    y_axis_names = data['data'].dtype.names
+                    for y_axis_name in y_axis_names:
+                        try:
+                            if y_axis_name == 'spikes':
+                                continue
+                            y_axis = data['data'][y_axis_name][0][0][0]
+                            #check if the y_axis vector is has the same results as spikes
+                            if (len(y_axis) != len(spikes)):
+                                continue
+                            unique_values = np.unique(y_axis)
+                            if (first_cell):
+                                d[y_axis_name] = dict()
+                                for i, key in enumerate(unique_values):
+                                    d[y_axis_name][key]=i
+                            else:
+                               if (len(unique_values) != len(d[y_axis_name].keys())):
+                                   print("cell ", cell, " isnt valid because it has not all labels")
+                                   return
+
+                            y_axis = np.array([d[y_axis_name][label] for label in y_axis])
+                            y_axis_dict[y_axis_name] = y_axis
+                        except:
+                            try :
+                                del d[y_axis_name]
+                            except:
+                                continue
+                            continue
+                    first_cell = False
+
+
+
                     # saving the data to a csv file, and concatenating the number of samples from each file.
                     self.createDirectory("csv_files/" + basename_folder + "/" + inner_folder)
-                    DataFrame(mat).to_csv(self.__temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
+                    DataFrame(spikes).to_csv(self.__temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
+
+                    #save the dict for the cell
+                    with open(self.__temp_path_for_writing  + "." +  cell[:-4], 'wb') as info_file:
+                        pickle.dump(y_axis_dict, info_file)
+
+                    if (read_first_cell_in_kind):
+                        with open(self.__temp_path_for_writing  + ".d", 'wb') as info_file:
+                            pickle.dump(list(y_axis_dict.keys()), info_file)
+                            read_first_cell_in_kind = False
+
 
     def savesInfo(self, info, pop_type, expirience_type):
         """
@@ -278,7 +277,17 @@ class decoder(object):
             testMatriceCombined.append(testSampelsMatrice)
         return np.hstack(TrainAvgMatricesCombined), np.hstack(testMatriceCombined)
 
-    def readFromDisk(self, sampling, is_fragments=False, segment=0, EYES = True):
+    def get_y_axis_from_disk(self, path, y_axis_key):
+        with open(path, 'rb') as info_file:
+            info = pickle.load(info_file)
+            return info[y_axis_key]
+
+    def clean_name(self,name):
+        name = name[name.find("#") + 1:]
+        name = name[:name.find(".")]
+        return name
+
+    def readFromDisk(self, sampling, y_axis_key, is_fragments=False, segment=0, EYES = True, ):
         """
 
         @param sampling: the names of the cells to read together and create one matrice
@@ -297,9 +306,8 @@ class decoder(object):
         loadFiles = []
         for cell_name in sampling:
             dataset = pd.read_csv(self.temp_path_for_reading + cell_name)
-            # print(dataset)
             X = dataset.iloc[:, cut_first: cut_last].values
-            y = dataset.iloc[:, -1].values
+            y = self.get_y_axis_from_disk(self.temp_path_for_reading + "." + self.clean_name(cell_name), y_axis_key)
             if EYES:
                 X = self.filterWithGaussian(X)
             loadFiles.append((X, y))
@@ -337,7 +345,7 @@ class decoder(object):
             sum1 = 0
             # choose random K cells
             sampeling = [cell,]
-            loadFiles = self.readFromDisk(sampeling)
+            loadFiles = self.readFromDisk(sampeling, 'target_direction')
             for i in range(self.NUMBER_OF_ITERATIONS):
                 X_train, X_test = self.mergeSampeling1(loadFiles)
                 y_train, y_test = self.getTestVectors()
@@ -350,20 +358,43 @@ class decoder(object):
         print(results / len(all_cell_names))
 
 
+    def get_common_y_axis(self, folders, path):
+        try:
+            l = []
+            for folder in folders:
+                l += self.get_y_axis_values(folder + "/")
+            return set(l)
+        except:
+            print("folder is currpted, delete folder of csv files and convert again")
+            exit(1)
 
+    def get_y_axis_column(self, common_y_axis):
+        common_y_axis = list(common_y_axis)
+        print("choose the dependent value:")
+        for i, y in enumerate(common_y_axis):
+            print(i + 1, ") ", y)
+        input_val = int(input("enter the number of the depedent value\n"))
+        if input_val not in [i+1 for i in list(range(len(common_y_axis)))]:
+            print("not a valid input")
+            exit(1)
+        return common_y_axis[input_val -1]
 
     def analyze(self, project_name:str, algo:int):
         """
         @param type: should be 0 for persuit or 1 for  saccade
         @return:
         """
-        path = self.__output_dir + "csv_files/" + project_name
-        folders = self.ask_for_dirs(path)
+        # with open("decoder_instructions", 'r') as info_file:
 
+
+        path = self.__output_dir + "csv_files/" + project_name + "/"
+        folders = self.ask_for_dirs(path, RUNNING_THE_TEST)
+        common_y_axis = self.get_common_y_axis(folders, path)
+
+        y_axis_key = self.get_y_axis_column(common_y_axis)
         for folder in folders:
             basename_folder = os.path.basename(os.path.dirname(folder))
             inner_folder = os.path.basename(folder)
-
             self.temp_path_for_reading = folder + "/"
             self.createDirectory(basename_folder +  "/" + inner_folder)
             # loading folder
@@ -397,7 +428,7 @@ class decoder(object):
                         sum1 = 0
                         # choose random K cells
                         sampeling = random.sample(cell_names, k=number_of_cells)
-                        loadFiles = self.readFromDisk(sampeling)
+                        loadFiles = self.readFromDisk(sampeling,y_axis_key)
                         for i in range(self.NUMBER_OF_ITERATIONS):
                             X_train, X_test = self.mergeSampeling1(loadFiles)
                             number_of_unique_labels = len(np.unique(loadFiles[0][1]))
@@ -526,7 +557,10 @@ class decoder(object):
                 print(line)
 
 
-
+    def get_y_axis_values(self,path : str):
+        with open(path + ".d", 'rb') as info_file:
+            info = pickle.load(info_file)
+        return info
 
 ## a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
 
@@ -534,9 +568,9 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
             '/Users/shaigindin/MATY/Neural_Analyzer/files/out1',['SNR'])
 
 # for eyes: target_direction , for rewards: reward_probability
-# a.convert_matlab_to_csv_temp(exp="haim", y_axis_name='reward_probability')
-# a.analyze(project_name = "haim", algo=0)
-
+a.convert_matlab_to_csv_temp(exp="project_name")
+a.analyze(project_name = "project_name", algo=0)
+# print(a.get_y_axis_values('/Users/shaigindin/MATY/Neural_Analyzer/files/out1/csv_files/project_name/pur/'))
 # a.convert_matlab_to_csv_temp(exp="moshe", y_axis_name='target_direction' ,pop=0)
 # a.analyze(project_name="moshe", algo = 0, type_of_popylation = 0)
 
@@ -723,3 +757,42 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
 #             sums.append(totalAv / self.TIMES)
 #         self.savesInfo(info, population, "")
 #         self.saveToLogger(population + "_" + self.d[type] + "_EYES", type)
+
+#
+# def convert_matlab_to_csv(self, exp, pop):
+#     """
+#     The expirement data is provided in the form of a MATLAB file, thus some pre-processing is needed
+#     in order to convert it to a more useable data-structre, in particular numpy array.
+#     Note that we convert the MATLAB file data to a pandas DataFrame and then we save it to a csv
+#     file for easier access in the future.
+#     @param exp:
+#     @param pop: 0 for pursuit 1 for saccade
+#     @return:
+#     """
+#     if (exp != "eyes" and exp != "rewards"):
+#         print("exp argument should be eyes or rewards only")
+#         return
+#     dir = self.__input_dir + exp + "/" + self.d[pop].lower() + "/"
+#     cell_names = fnmatch.filter(os.listdir(dir), '*.mat')  # filtering only the mat files.
+#     cell_names.sort()  # sorting the names of the files in order to create consistent runs.
+#     cells = []
+#     for name in self.population_names:
+#         cells += self.filter_cells(cell_names, name)
+#     for cell in cells:
+#         DATA_LOC = dir + cell  # cell file location
+#         data = loadmat(DATA_LOC)  # loading the matlab data file to dict
+#         if (exp == "eyes"):
+#             tg_dir = data['data']['target_direction'][0][0][0] / 45
+#         elif (exp == 'rewards'):
+#             tg_dir = data['data']['reward_probability'][0][0][0]
+#             tg_dir[tg_dir == 75] = 1
+#             tg_dir[tg_dir == 25] = 0
+#         spikes = data['data']['spikes'][0][0].todense().transpose()
+#         # tg_time = data['data']['target_motion'][0][0][0]
+#         mat = np.hstack([spikes, tg_dir.reshape(len(tg_dir), 1)])
+#         # saving the data to a csv file, and concatenating the number of samples from each file.
+#         if exp == "eyes":
+#             self.createDirectory("csv_files/eyes/" + self.d[pop] + "/")
+#         else:
+#             self.createDirectory("csv_files/rewards/" + self.d[pop] + "/")
+#         DataFrame(mat).to_csv(self.__temp_path_for_writing + str(spikes.shape[0]).upper() + "#" + cell[:-3] + "csv")
