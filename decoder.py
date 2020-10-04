@@ -66,6 +66,10 @@ class decoder(object):
         return cell_name[cell_name.find("#")+1:cell_name.find("_")]
 
     @staticmethod
+    def get_population_name_and_population(cell_name):
+        return cell_name[cell_name.find("#")+1:cell_name.find(".")]
+
+    @staticmethod
     def get_cell_name(cell_name):
         return cell_name[cell_name.find("_") + 1:cell_name.find(".")]
 
@@ -77,6 +81,7 @@ class decoder(object):
         population_name_list = []
         K_population = []
         expirement_list = []
+        group=[]
         for file_path in file_paths:
                 if os.path.isdir(file_path):
                     cell_names = fnmatch.filter(os.listdir(file_path), '*')
@@ -97,13 +102,18 @@ class decoder(object):
                             else:
                                 K_population.append(len(tup[0][0][0][0]))
                             rate_list.append(tup[1])
-                            population_name_list.append(os.path.basename(file_name_path))
-                            algo_name_list.append(os.path.basename(os.path.dirname(file_name_path)))
-                            kind_name_list.append(os.path.basename(os.path.dirname(os.path.dirname(file_name_path))))
-                            expirement_list.append(os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(file_name_path)))))
+                            name = os.path.basename(file_name_path)
+                            population_name_list.append(name)
+                            algo_name = os.path.basename(os.path.dirname(file_name_path))
+                            algo_name_list.append(algo_name)
+                            kind_name = os.path.basename(os.path.dirname(os.path.dirname(file_name_path)))
+                            kind_name_list.append(kind_name)
+                            expirement_name = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(file_name_path))))
+                            expirement_list.append(os.path.basename(expirement_name))
+                            group.append(" ".join([expirement_name,kind_name,algo_name, name]))
         return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
                               'population': population_name_list,'kind':kind_name_list, 'algorithm':algo_name_list,
-                              'experiment': expirement_list})
+                              'experiment': expirement_list, 'group': group})
 
     @staticmethod
     def get_population_one_cell_data_frame(file_path:str):
@@ -186,6 +196,7 @@ class decoder(object):
                     DATA_LOC = folder + "/" + cell  # cell file location
                     data = loadmat(DATA_LOC)  # loading the matlab data file to dict
                     spikes = data['data']['spikes'][0][0].todense().transpose()
+                    print(spikes.shape)
                     y_axis_names = data['data'].dtype.names
                     for y_axis_name in y_axis_names:
                         try:
@@ -525,27 +536,40 @@ class decoder(object):
         for algo in algos:
             self.ALGOS[algo](y_axis_keys, folders, is_common=is_common)
 
-    def filter_cells_for_coomon(self, path, folder_name, folders, is_common):
-        if (is_common):
+    def filter_cells_for_common(self, path, folder_name, folders, is_common):
+        if (is_common and len(folders) > 1):
             others = []
             current =  fnmatch.filter(os.listdir(folder_name), '*.csv')
             for folder in folders:
-                others += fnmatch.filter(os.listdir(folder), '*.csv')
-            print(others)
-            print(current)
-            exit(0)
+                if folder == folder_name:
+                    pass
+                else:
+                    others += fnmatch.filter(os.listdir(folder), '*.csv')
+            others = [decoder.get_population_name_and_population(name) for name in others]
+            return [name for name in current if decoder.get_population_name_and_population(name) in others]
         else:
             return fnmatch.filter(os.listdir(path), '*.csv')
+
+    @staticmethod
+    def create_name_of_folder(folders):
+        name = ["common"]
+        for folder in folders:
+            name.append(os.path.basename(folder))
+        return "_".join(name)
 
     def simple_knn(self, y_axis_keys, folders, is_common):
         for y_axis_key in y_axis_keys:
             for folder in folders:
                 basename_folder = os.path.basename(os.path.dirname(folder))
-                inner_folder = os.path.basename(folder)
+
                 self.temp_path_for_reading = folder + "/"
+                if (is_common and len(folders)>1):
+                    inner_folder = decoder.create_name_of_folder(folders)
+                else:
+                    inner_folder = os.path.basename(folder)
                 self.createDirectory( basename_folder +  "/" + y_axis_key + "/" + inner_folder + "/simple_knn/")
                 # loading folder
-                all_cell_names = self.filter_cells_for_coomon(self.temp_path_for_reading, folder, folders, is_common)
+                all_cell_names = self.filter_cells_for_common(self.temp_path_for_reading, folder, folders, is_common)
                 all_cell_names.sort()
                 #empty files cach
                 self.__files = dict()
@@ -618,11 +642,16 @@ class decoder(object):
         for y_axis_key in y_axis_keys:
             for folder in folders:
                 basename_folder = os.path.basename(os.path.dirname(folder))
-                inner_folder = os.path.basename(folder)
+                if (is_common and len(folders)>1):
+                    inner_folder = decoder.create_name_of_folder(folders)
+                else:
+                    inner_folder = os.path.basename(folder)
                 self.temp_path_for_reading = folder + "/"
                 self.createDirectory(basename_folder + "/" + y_axis_key + "/" + inner_folder + "/simple_knn_fragments/")
                 # loading folder
-                all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
+                # all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
+                all_cell_names = self.filter_cells_for_common(self.temp_path_for_reading, folder, folders, is_common)
+
                 all_cell_names.sort()
 
                 # empty files cach
@@ -658,6 +687,7 @@ class decoder(object):
                                 # choose random K cells
                                 sampeling = random.sample(cell_names, k=number_of_cells)
                                 loadFiles = self.read_from_disk(sampeling, y_axis_key, is_fragments=True, segment=segment)
+
                                 for i in range(self.NUMBER_OF_ITERATIONS):
                                     X_train, X_test = self.mergeSampeling1(loadFiles)
                                     number_of_unique_labels = len(np.unique(loadFiles[0][1]))
@@ -676,26 +706,31 @@ class decoder(object):
 
 
 
-
-    def file_name_changer(self, path):
+    @staticmethod
+    def file_name_changer(path):
         """
         helper func for name changing
         @param path:
         @return:
         """
+        path = os.path.join(path, '')
+        # reduce PC and BG in the begining
+        for reg in ['*PC*','*BG*']:
+            all_cell_names = fnmatch.filter(os.listdir(path), reg)
+            for name in all_cell_names:
+                newName = name[3:]
+                os.rename(path + name, path + newName)
+
+        # makes file name captial
         all_cell_names = fnmatch.filter(os.listdir(path), '*.mat')
         for name in all_cell_names:
-            # print(name)
-
-            #makes file name captial
             l = name.split('.')
             newName = l[0].upper() + "." + l[1]
+            os.rename(path + name, path + newName)
 
-            # reduce PC and BG in the begining
-            # newName = name[3:]
-            os.rename(path  + name, path + newName)
 
-            # print(newName)
+
+
 
 
     def help(self):
@@ -716,30 +751,17 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
 
 # for eyes: target_direction , for rewards: reward_probability
 # a.convert_matlab_to_csv_temp(exp="project_name")
-# a.analyze(project_name = "project_name", is_common=True)
+a.analyze(project_name = "project_name", is_common=False)
+a.analyze(project_name = "project_name", is_common=True)
 # print(a.get_y_axis_values('/Users/shaigindin/MATY/Neural_Analyzer/files/out1/csv_files/project_name/pur/'))
 # a.convert_matlab_to_csv_temp(exp="moshe", y_axis_name='target_direction' ,pop=0)
-# a.analyze(project_name="moshe", algo = 0, type_of_popylation = 0)
 
 # paths = ["/Users/shaigindin/MATY/Neural_Analyzer/files/finalData/EYES/PURSUIT/SNR","/Users/shaigindin/MATY/Neural_Analyzer/files/finalData/EYES/PURSUIT/MSN"]
 # data = decoder.get_acc_df_for_graph(paths)
 # print(data)
-# a.simple_knn_eyes(1)
-
-# a.simple_knn_rewards(0)
-# a.simple_knn_rewards(1)
-#
-# a.simple_knn_eye_fregment(0)
-# a.simple_knn_eye_fregment(1)
 
 
-# a.simple_knn_eye_fregment(1)
-# a.simple_knn_eyes(1)
-
-# a.simple_knn_rewards(0)
-
-
-
+# decoder.file_name_changer("/Users/shaigindin/MATY/Neural_Analyzer/files/in/project_name/saccade/")
 
 # g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/Users/shaigindin/MATY/Neural_Analyzer/files/out/REWARDS/', fragments_cells=[0,4,7,9],load_fragments=False)
 #
