@@ -746,8 +746,8 @@ class decoder(object):
 
 ## a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
 
-a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
-            '/Users/shaigindin/MATY/Neural_Analyzer/files/out1',['SNR','MSN','CRB'])
+# a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
+#             '/Users/shaigindin/MATY/Neural_Analyzer/files/out1',['SNR','MSN','CRB'])
 
 # for eyes: target_direction , for rewards: reward_probability
 # a.convert_matlab_to_csv_temp(exp="project_name")
