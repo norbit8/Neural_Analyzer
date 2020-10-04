@@ -30,11 +30,11 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 1  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 100  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 1  # number of iteration on each K-population of cells.
-    K = 6  # number of files per time
+    TIMES = 30  # number of iteration on each K-population of cells.
+    K = 48  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
@@ -751,8 +751,8 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
 
 # for eyes: target_direction , for rewards: reward_probability
 # a.convert_matlab_to_csv_temp(exp="project_name")
-a.analyze(project_name = "project_name", is_common=False)
-a.analyze(project_name = "project_name", is_common=True)
+# a.analyze(project_name = "project_name", is_common=False)
+# a.analyze(project_name = "project_name", is_common=True)
 # print(a.get_y_axis_values('/Users/shaigindin/MATY/Neural_Analyzer/files/out1/csv_files/project_name/pur/'))
 # a.convert_matlab_to_csv_temp(exp="moshe", y_axis_name='target_direction' ,pop=0)
 
