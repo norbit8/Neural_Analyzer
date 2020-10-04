@@ -12,7 +12,6 @@ import random
 import pickle
 from scipy.io import loadmat
 from typing import List
-from graphs import *
 
 ALL_POSSIBILE_POPULATIONS = ["SNR", "MSN", "TAN", "CS","SS","CRB"]
 
