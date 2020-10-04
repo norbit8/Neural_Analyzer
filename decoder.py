@@ -2,8 +2,8 @@
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 import fnmatch
-from wcmatch import wcmatch
-from wcmatch import fnmatch as fn
+# from wcmatch import wcmatch
+# from wcmatch import fnmatch as fn
 import re
 import os
 from sklearn.metrics import accuracy_score
@@ -85,7 +85,8 @@ class decoder(object):
         for file_path in file_paths:
                 if os.path.isdir(file_path):
                     cell_names = fnmatch.filter(os.listdir(file_path), '*')
-                    cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
+                    cell_names = [name for name in cell_names if name in ALL_POSSIBILE_POPULATIONS]
+                    # cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
                     file_path = os.path.join(file_path, '')
                     cell_names = [file_path + name for name in cell_names]
                 elif os.path.isfile(file_path):
