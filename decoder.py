@@ -40,7 +40,7 @@ class decoder(object):
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
     SAMPLES_LOWER_BOUND = 100  # filter the cells with less than _ sampels
     number_of_cells_to_choose_for_test = 1 #when buildin X_test matrice, how many samples from each direction / reward
-    step = 5
+    step = 1
     __algo_names = ["simple_knn", "simple_knn_fregments"]
 
 
@@ -68,6 +68,42 @@ class decoder(object):
     @staticmethod
     def get_cell_name(cell_name):
         return cell_name[cell_name.find("_") + 1:cell_name.find(".")]
+
+    @staticmethod
+    def get_acc_df_for_graph(file_paths:List):
+        algo_name_list = []
+        kind_name_list = []
+        rate_list = []
+        population_name_list = []
+        K_population = []
+        expirement_list = []
+        for file_path in file_paths:
+                if os.path.isdir(file_path):
+                    cell_names = fnmatch.filter(os.listdir(file_path), '*')
+                    cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
+                    file_path = os.path.join(file_path, '')
+                    cell_names = [file_path + name for name in cell_names]
+                elif os.path.isfile(file_path):
+                    cell_names = [file_path]
+                else:
+                    print("file path is not valid")
+                    exit(1)
+                for file_name_path in cell_names:
+                    with open(file_name_path, 'rb') as info_file:
+                        info = pickle.load(info_file)
+                        for i,tup in enumerate(info):
+                            if i==0:
+                                K_population.append(i+1)
+                            else:
+                                K_population.append(len(tup[0][0][0][0]))
+                            rate_list.append(tup[1])
+                            population_name_list.append(os.path.basename(file_name_path))
+                            algo_name_list.append(os.path.basename(os.path.dirname(file_name_path)))
+                            kind_name_list.append(os.path.basename(os.path.dirname(os.path.dirname(file_name_path))))
+                            expirement_list.append(os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(file_name_path)))))
+        return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
+                              'population': population_name_list,'kind':kind_name_list, 'algorithm':algo_name_list,
+                              'experiment': expirement_list})
 
     @staticmethod
     def get_population_one_cell_data_frame(file_path:str):
@@ -470,13 +506,14 @@ class decoder(object):
                 return
         return [self.__algo_names[i-1] for i in userList]
 
-    def analyze(self, project_name:str):
+    def analyze(self, project_name:str, is_common = False, lag = 1000, segments_size = 12):
         """
         @param type: should be 0 for persuit or 1 for  saccade
         @return:
         """
-        # with open("decoder_instructions", 'r') as info_file:
 
+        self.LAG = lag
+        self.SEGMENTS = segments_size
 
         path = self.__output_dir + "csv_files/" + project_name + "/"
         folders = self.ask_for_dirs(path, RUNNING_THE_TEST)
@@ -486,9 +523,21 @@ class decoder(object):
 
         algos = self.get_algos()
         for algo in algos:
-            self.ALGOS[algo](y_axis_keys, folders)
+            self.ALGOS[algo](y_axis_keys, folders, is_common=is_common)
 
-    def simple_knn(self, y_axis_keys, folders):
+    def filter_cells_for_coomon(self, path, folder_name, folders, is_common):
+        if (is_common):
+            others = []
+            current =  fnmatch.filter(os.listdir(folder_name), '*.csv')
+            for folder in folders:
+                others += fnmatch.filter(os.listdir(folder), '*.csv')
+            print(others)
+            print(current)
+            exit(0)
+        else:
+            return fnmatch.filter(os.listdir(path), '*.csv')
+
+    def simple_knn(self, y_axis_keys, folders, is_common):
         for y_axis_key in y_axis_keys:
             for folder in folders:
                 basename_folder = os.path.basename(os.path.dirname(folder))
@@ -496,7 +545,7 @@ class decoder(object):
                 self.temp_path_for_reading = folder + "/"
                 self.createDirectory( basename_folder +  "/" + y_axis_key + "/" + inner_folder + "/simple_knn/")
                 # loading folder
-                all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
+                all_cell_names = self.filter_cells_for_coomon(self.temp_path_for_reading, folder, folders, is_common)
                 all_cell_names.sort()
                 #empty files cach
                 self.__files = dict()
@@ -565,7 +614,7 @@ class decoder(object):
             os.makedirs(self.__output_dir + name)
         self.__temp_path_for_writing = self.__output_dir + name + "/"
 
-    def simple_knn_fragments(self, y_axis_keys, folders):
+    def simple_knn_fragments(self, y_axis_keys, folders, is_common):
         for y_axis_key in y_axis_keys:
             for folder in folders:
                 basename_folder = os.path.basename(os.path.dirname(folder))
@@ -667,13 +716,14 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
 
 # for eyes: target_direction , for rewards: reward_probability
 # a.convert_matlab_to_csv_temp(exp="project_name")
-# a.analyze(project_name = "project_name")
+# a.analyze(project_name = "project_name", is_common=True)
 # print(a.get_y_axis_values('/Users/shaigindin/MATY/Neural_Analyzer/files/out1/csv_files/project_name/pur/'))
 # a.convert_matlab_to_csv_temp(exp="moshe", y_axis_name='target_direction' ,pop=0)
 # a.analyze(project_name="moshe", algo = 0, type_of_popylation = 0)
 
-# print(decoder.get_population_one_cell_data_frame("/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pur/simple_knn/"))
-
+# paths = ["/Users/shaigindin/MATY/Neural_Analyzer/files/finalData/EYES/PURSUIT/SNR","/Users/shaigindin/MATY/Neural_Analyzer/files/finalData/EYES/PURSUIT/MSN"]
+# data = decoder.get_acc_df_for_graph(paths)
+# print(data)
 # a.simple_knn_eyes(1)
 
 # a.simple_knn_rewards(0)
@@ -697,3 +747,5 @@ a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
 # g.plot_experiments_same_populations()
 # g.plot_acc_over_concat_cells()
 #
+
+# ggplot(data = data, mapping=aes(x='', y='acc', color='population', group='population'))
