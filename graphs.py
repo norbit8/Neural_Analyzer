@@ -255,32 +255,24 @@ class Graphs:
             experiments = self.__kind_names
         return self.__frag_df[(self.__frag_df['population'].isin(populations)) &
                               (self.__frag_df['experiment_type'].isin(experiments))]
-
-    def plot_fragments(self, populations: List[str] = None,
-                       experiments: List[str] = None):
+    @staticmethod
+    def plot_fragments(files: List[str], concat = List[int]):
         """
         Printing the fragments graphs
         :return: None if there is an error, and the DataFrame representing the fragments data.
         """
-        if self.__frag_df is None:
-            print(CRED + "Fragments are not loaded, please create a new graphs instance with the relevant flag" + CEND)
-            return
-        if populations is None:
-            populations = self.__populations
-        if experiments is None:
-            experiments = self.__kind_names
-        for exp_index, exp_type in enumerate(experiments):
-            print("Printing " + exp_type)
-            for population in populations:
-                print(ggplot(data=self.__frag_df[(self.__frag_df['population'] == population) &
-                                                 (self.__frag_df['experiment_type'] == exp_type)],
-                             mapping=aes(x='time', y='acc', group=1)) +
-                      geom_line(color='red') +
-                      geom_point() + facet_wrap('~concatenated_cells') +
-                      ggtitle(population + ' ' + exp_type) +
-                      theme_classic() +
-                      geom_errorbar(mapping=aes(x="time", ymin='acc-std', ymax='acc+std')))
-        return self.__frag_df
+        df = decoder.get_acc_df_for_graph_frag(files)
+        df = df[df["concatenated_cells"].isin(concat)]
+
+        for pop in df.population.unique():
+            df2 = df[df['population'] == pop]
+            print(ggplot(data=df2,
+                         mapping=aes(x='time', y='acc', group=1)) +
+                  geom_line(color='red') +
+                  geom_point() + facet_wrap('~concatenated_cells') +
+                  ggtitle(pop) +
+                  theme_classic() +
+                  geom_errorbar(mapping=aes(x="time", ymin='acc-std', ymax='acc+std')))
 
     @staticmethod
     def plot_acurracy_comparision(one:str, two:str):
@@ -358,3 +350,6 @@ class Graphs:
 # Graphs.plot_acc_over_concat_cells([saccade_folder])
 # Graphs.plot_histogram([pursuit_folder])
 # Graphs.plot_acurracy_comparision(pursuit_folder, saccade_folder)
+pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
+
+Graphs.plot_fragments([pursuit_SNR], [1, 10 , 20 ,30])

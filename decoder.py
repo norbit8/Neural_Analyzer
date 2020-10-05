@@ -4,6 +4,7 @@ from scipy.ndimage import gaussian_filter
 import fnmatch
 # from wcmatch import wcmatch
 # from wcmatch import fnmatch as fn
+import re
 import os
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
@@ -14,12 +15,14 @@ from typing import List
 from pandas import *
 import numpy as np
 import math
+from functools import reduce
+
 
 #remember to delete
 from plotnine import *
 
 ALL_POSSIBILE_POPULATIONS = ["SNR", "MSN", "TAN", "CS","SS","CRB"]
-
+REG_FOR_FRAGMENTS = r'^(CRB|MSN|SS|CS|TAN|SNR)\d+'
 MSG = "Choose folders to cnvert its files to csv"
 
 RUNNING_THE_TEST = "Choose folders for running the test"
@@ -78,7 +81,8 @@ class decoder(object):
         return cell_name[cell_name.find("_") + 1:cell_name.find(".")]
 
     @staticmethod
-    def get_acc_df_for_graph(file_paths:List):
+    def get_acc_df_for_graph(file_paths:List, time=-1):
+        time_list = []
         algo_name_list = []
         kind_name_list = []
         rate_list = []
@@ -103,16 +107,16 @@ class decoder(object):
                     with open(file_name_path, 'rb') as info_file:
                         info = pickle.load(info_file)
                         for i,tup in enumerate(info):
-                            if i==0:
+                            if i==0 and time == -1:
                                 K_population.append(i+1)
                                 acc_list = [result[1] for result in tup[0]]
                             else:
                                 K_population.append(len(tup[0][0][0][0]))
                                 acc_list = [result[0][1] for result in tup[0]]
-
                             deviation = np.std(np.array(acc_list), ddof=1) / math.sqrt(len(acc_list))
                             stddev.append(deviation)
                             rate_list.append(tup[1])
+                            time_list.append(time)
                             name = os.path.basename(file_name_path)
                             population_name_list.append(name)
                             algo_name = os.path.basename(os.path.dirname(file_name_path))
@@ -124,10 +128,70 @@ class decoder(object):
                             group.append("\n".join([expirement_name,kind_name,algo_name, name]))
         return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
                               'population': population_name_list,'kind':kind_name_list, 'algorithm':algo_name_list,
-                              'experiment': expirement_list, 'group': group, 'std': stddev})
+                              'experiment': expirement_list, 'group': group, 'std': stddev, 'time': time_list})
+
+    @staticmethod
+    def get_acc_df_for_graph_frag(file_paths: List):
+        time_list = []
+        algo_name_list = []
+        kind_name_list = []
+        rate_list = []
+        population_name_list = []
+        K_population = []
+        expirement_list = []
+        group = []
+        stddev = []
+        for file_path in file_paths:
+            if os.path.isdir(file_path):
+                cell_names = fnmatch.filter(os.listdir(file_path), '*')
+                cell_names = [os.path.join(file_path, val) for val in cell_names if re.search(REG_FOR_FRAGMENTS, val)]
+            elif os.path.isfile(file_path):
+                cell_names = [file_path]
+            else:
+                print("file path is not valid")
+                exit(1)
+            for file_name_path in cell_names:
+                with open(file_name_path, 'rb') as info_file:
+                    info = pickle.load(info_file)
+                    for i, tup in enumerate(info):
+                        acc_list = [val[0][1] for val in tup[0]]
+                        # print(len(tup[0][0][0][0]))
+                        K_population.append(len(tup[0][0][0][0]))
+                        acc_list = [result[0][1] for result in tup[0]]
+                        deviation = np.std(np.array(acc_list), ddof=1) / math.sqrt(len(acc_list))
+                        stddev.append(deviation)
+                        rate_list.append(tup[1])
+                        name = os.path.basename(file_name_path)
+                        time = int(''.join(i for i in name if i.isdigit()))
+                        time_list.append(time)
+                        name = ''.join(i for i in name if i.isalpha())
+                        population_name_list.append(name)
+                        algo_name = os.path.basename(os.path.dirname(file_name_path))
+                        algo_name_list.append(algo_name)
+                        kind_name = os.path.basename(os.path.dirname(os.path.dirname(file_name_path)))
+                        kind_name_list.append(kind_name)
+                        expirement_name = os.path.basename(
+                            os.path.dirname(os.path.dirname(os.path.dirname(file_name_path))))
+                        expirement_list.append(os.path.basename(expirement_name))
+                        group.append("\n".join([expirement_name, kind_name, algo_name, name]))
+        return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
+                          'population': population_name_list, 'kind': kind_name_list, 'algorithm': algo_name_list,
+                          'experiment': expirement_list, 'group': group, 'std': stddev, 'time': time_list})
 
 
-
+    @staticmethod
+    def get_acc_df_for_fragments_graph(file_paths:List):
+        dfList = []
+        for file_path in file_paths:
+            if os.path.isdir(file_path):
+                cell_names = fnmatch.filter(os.listdir(file_path), '*')
+                cells = [os.path.join(file_path, val) for val in cell_names if re.search(REG_FOR_FRAGMENTS, val)]
+            else:
+                cells = [file_path]
+            for cell in cells:
+                time_sagment = ''.join(i for i in os.path.basename(cell) if i.isdigit())
+                print(decoder.get_acc_df_for_graph([cell], int(time_sagment)))
+        return
 
     @staticmethod
     def get_population_one_cell_data_frame(file_path:str):
@@ -809,6 +873,7 @@ class decoder(object):
 
 # ggplot(data = data, mapping=aes(x='', y='acc', color='population', group='population'))
 
-# pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn/SNR"
+pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
 #
-# decoder.get_acc_df_for_graph([pursuit_SNR])
+pd.set_option('display.max_columns', None)
+print(decoder.get_acc_df_for_graph_frag([pursuit_SNR]))
