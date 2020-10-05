@@ -12,6 +12,10 @@ import pickle
 from scipy.io import loadmat
 from typing import List
 from pandas import *
+import numpy as np
+
+#remember to delete
+from plotnine import *
 
 ALL_POSSIBILE_POPULATIONS = ["SNR", "MSN", "TAN", "CS","SS","CRB"]
 
@@ -119,7 +123,7 @@ class decoder(object):
     def get_population_one_cell_data_frame(file_path:str):
         if os.path.isdir(file_path):
             cell_names = fnmatch.filter(os.listdir(file_path), '*')
-            cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
+            cell_names = [name for name in cell_names if name in ALL_POSSIBILE_POPULATIONS]
             file_path= os.path.join(file_path, '')
             cell_names = [file_path + name for name in cell_names]
         elif os.path.isfile(file_path):
@@ -728,11 +732,6 @@ class decoder(object):
             newName = l[0].upper() + "." + l[1]
             os.rename(path + name, path + newName)
 
-
-
-
-
-
     def help(self):
         with open("decoder_instructions", 'r') as info_file:
             for line in info_file.readlines():
@@ -744,6 +743,55 @@ class decoder(object):
             info = pickle.load(info_file)
         return info
 
+    @staticmethod
+    def get_name_from_path(path:str):
+        return os.path.basename(path)
+
+    @staticmethod
+    def get_kind_from_path(path:str):
+        return  os.path.basename(os.path.dirname(os.path.dirname(path)))
+
+    @staticmethod
+    def get_expirement_from_path(path:str):
+        return  os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(path))))
+
+    @staticmethod
+    def get_algo_name_from_path(path):
+        return os.path.basename(os.path.dirname(path))
+
+    @staticmethod
+    def get_full_name(path):
+        return decoder.get_expirement_from_path(path) + " " +\
+                decoder.get_kind_from_path(path) + " " + \
+                decoder.get_algo_name_from_path(path) + " " + \
+                decoder.get_name_from_path(path)
+
+    # @staticmethod
+    # def plot_acurracy_comparision(one:str, two:str):
+    #     try:
+    #         df1 = decoder.get_population_one_cell_data_frame(one)
+    #         df2 = decoder.get_population_one_cell_data_frame(two)
+    #     except:
+    #         print("input is invalid: one (or both) of the files is not ok")
+    #         exit(0)
+    #     df1.rename(columns={"rates": "rates1"}, inplace=True)
+    #     df2.rename(columns={"rates": "rates2"}, inplace=True)
+    #     final_df = pd.merge(df1, df2, how ='inner', on =['cell_name'])
+    #     if final_df.shape[0] == 0:
+    #         print("no matching cells")
+    #         exit(0)
+    #     print(ggplot(data=final_df,
+    #                  mapping=aes(x="rates1", y="rates2",color="cell_name")) + \
+    #     geom_point(alpha=0.8) + \
+    #     labs(x=decoder.get_full_name(one) + ' Accuracy', y=decoder.get_full_name(two) + ',Accuracy') + \
+    #           scale_x_continuous(breaks=np.arange(0,  1, 0.05)) + \
+    #           scale_y_continuous(breaks=np.arange(0, 1, 0.05))
+    #     )
+    #     return final_df
+
+# path1 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/SNR"
+# path2 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/saccade/simple_knn/SNR"
+# decoder.plot_acurracy_comparision(path1, path2)
 ## a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
 
 # a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
