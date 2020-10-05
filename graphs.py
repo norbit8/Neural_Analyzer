@@ -27,72 +27,72 @@ class Graphs:
         """
         pass
 
-    @staticmethod
-    def get_population_one_cell_data_frame(file_path: str):
-        cell_names = []
-        if os.path.isdir(file_path):
-            cell_names = fnmatch.filter(os.listdir(file_path), '*')
-            cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
-            file_path = os.path.join(file_path, '')
-            cell_names = [file_path + name for name in cell_names]
-        elif os.path.isfile(file_path):
-            cell_names = [file_path]
-        names_list = []
-        rate_list = []
-        population_list = []
-        for file_name_path in cell_names:
-            with open(file_name_path, 'rb') as info_file:
-                info = pickle.load(info_file)
-                for tup in info[0][0]:
-                    names_list.append(decoder.get_cell_name(tup[0]))
-                    rate_list.append(tup[1])
-                    population_list.append(decoder.get_population_name(tup[0]))
-        return DataFrame({'cell_name': names_list, 'acc': rate_list, 'type': population_list})
+    # @staticmethod
+    # def get_population_one_cell_data_frame(file_path: str):
+    #     cell_names = []
+    #     if os.path.isdir(file_path):
+    #         cell_names = fnmatch.filter(os.listdir(file_path), '*')
+    #         cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
+    #         file_path = os.path.join(file_path, '')
+    #         cell_names = [file_path + name for name in cell_names]
+    #     elif os.path.isfile(file_path):
+    #         cell_names = [file_path]
+    #     names_list = []
+    #     rate_list = []
+    #     population_list = []
+    #     for file_name_path in cell_names:
+    #         with open(file_name_path, 'rb') as info_file:
+    #             info = pickle.load(info_file)
+    #             for tup in info[0][0]:
+    #                 names_list.append(decoder.get_cell_name(tup[0]))
+    #                 rate_list.append(tup[1])
+    #                 population_list.append(decoder.get_population_name(tup[0]))
+    #     return DataFrame({'cell_name': names_list, 'acc': rate_list, 'type': population_list})
 
-    @staticmethod
-    def get_acc_df_for_graph(file_paths: List):
-        algo_name_list = []
-        kind_name_list = []
-        rate_list = []
-        population_name_list = []
-        K_population = []
-        expirement_list = []
-        group = []
-        for file_path in file_paths:
-            if os.path.isdir(file_path):
-                cell_names = fnmatch.filter(os.listdir(file_path), '*')
-                cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
-                file_path = os.path.join(file_path, '')
-                cell_names = [file_path + name for name in cell_names]
-            elif os.path.isfile(file_path):
-                cell_names = [file_path]
-            else:
-                print("file path is not valid")
-                exit(1)
-            for file_name_path in cell_names:
-                with open(file_name_path, 'rb') as info_file:
-                    # print("CHECK: ", Graphs.create_std_data_frag(info_file))
-                    info = pickle.load(info_file)
-                    for i, tup in enumerate(info):
-                        if i == 0:
-                            K_population.append(i + 1)
-                        else:
-                            K_population.append(len(tup[0][0][0][0]))
-                        print("tup: ", tup)
-                        rate_list.append(np.around(tup[1], 3))
-                        name = os.path.basename(file_name_path)
-                        population_name_list.append(name)
-                        algo_name = os.path.basename(os.path.dirname(file_name_path))
-                        algo_name_list.append(algo_name)
-                        kind_name = os.path.basename(os.path.dirname(os.path.dirname(file_name_path)))
-                        kind_name_list.append(kind_name)
-                        expirement_name = os.path.basename(
-                            os.path.dirname(os.path.dirname(os.path.dirname(file_name_path))))
-                        expirement_list.append(os.path.basename(expirement_name))
-                        group.append("\n".join([expirement_name, kind_name, algo_name, name]))
-        return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
-                          'population': population_name_list, 'kind': kind_name_list, 'algorithm': algo_name_list,
-                          'experiment': expirement_list, 'group': group})
+    # @staticmethod
+    # def get_acc_df_for_graph(file_paths: List):
+    #     algo_name_list = []
+    #     kind_name_list = []
+    #     rate_list = []
+    #     population_name_list = []
+    #     K_population = []
+    #     expirement_list = []
+    #     group = []
+    #     for file_path in file_paths:
+    #         if os.path.isdir(file_path):
+    #             cell_names = fnmatch.filter(os.listdir(file_path), '*')
+    #             cell_names = fn.filter(cell_names, ALL_POSSIBILE_POPULATIONS)
+    #             file_path = os.path.join(file_path, '')
+    #             cell_names = [file_path + name for name in cell_names]
+    #         elif os.path.isfile(file_path):
+    #             cell_names = [file_path]
+    #         else:
+    #             print("file path is not valid")
+    #             exit(1)
+    #         for file_name_path in cell_names:
+    #             with open(file_name_path, 'rb') as info_file:
+    #                 # print("CHECK: ", Graphs.create_std_data_frag(info_file))
+    #                 info = pickle.load(info_file)
+    #                 for i, tup in enumerate(info):
+    #                     if i == 0:
+    #                         K_population.append(i + 1)
+    #                     else:
+    #                         K_population.append(len(tup[0][0][0][0]))
+    #                     print("tup: ", tup)
+    #                     rate_list.append(np.around(tup[1], 3))
+    #                     name = os.path.basename(file_name_path)
+    #                     population_name_list.append(name)
+    #                     algo_name = os.path.basename(os.path.dirname(file_name_path))
+    #                     algo_name_list.append(algo_name)
+    #                     kind_name = os.path.basename(os.path.dirname(os.path.dirname(file_name_path)))
+    #                     kind_name_list.append(kind_name)
+    #                     expirement_name = os.path.basename(
+    #                         os.path.dirname(os.path.dirname(os.path.dirname(file_name_path))))
+    #                     expirement_list.append(os.path.basename(expirement_name))
+    #                     group.append("\n".join([expirement_name, kind_name, algo_name, name]))
+    #     return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
+    #                       'population': population_name_list, 'kind': kind_name_list, 'algorithm': algo_name_list,
+    #                       'experiment': expirement_list, 'group': group})
 
     @staticmethod
     def plot_acc_over_concat_cells(files: List[str] = None, number_of_concat_cells: int = 100, ticks: int = 1):
@@ -104,7 +104,7 @@ class Graphs:
         :param number_of_concat_cells: Number of cells to show !!!INCLUSIVE!!!. (X Axis ticks)
         :return: The filtered DataFrame.
         """
-        filtered_dataframe = Graphs.get_acc_df_for_graph(files)
+        filtered_dataframe = decoder.get_acc_df_for_graph(files)
         print(ggplot(data=filtered_dataframe,
                      mapping=aes(x='concatenated_cells', y='acc', color='group', group='group')) + \
               geom_line() +
@@ -126,7 +126,7 @@ class Graphs:
         """
         if files is None:
             return None
-        return Graphs.get_acc_df_for_graph(files)
+        return decoder.get_acc_df_for_graph(files)
 
     @staticmethod
     def plot_histogram(files: List[str] = None):
@@ -134,25 +134,26 @@ class Graphs:
         steps = np.arange(0, 1, 0.2)
         for step in steps:
             new_arr.append(str(int(step * 100)) + "% - " + str(int((step + 0.2) * 100)) + "%")
-        for file in files:
-            if os.name == 'nt':  # windows
-                file = file + "\\"
-            elif os.name == 'posix':  # Linux , Mac OSX and all the other posix compatible os.
-                file = file + "/"
-            else:
-                file = file + "/"
 
+        for file in files:
             if os.path.isdir(file):
-                all_the_files = os.listdir(file)
+                if os.name == 'nt':  # windows
+                    file = file + "\\"
+                elif os.name == 'posix':  # Linux , Mac OSX and all the other posix compatible os.
+                    file = file + "/"
+                else:
+                    file = file + "/"
+                all_the_files = [os.path.dirname(file) + "/" + file2 for file2 in os.listdir(file)]
+                all_the_files = [name for name in all_the_files if os.path.basename(name) in ALL_POSSIBILE_POPULATIONS]
+
             else:
-                all_the_files = file
+                all_the_files = [file]
             for file2 in all_the_files:
                 acc = []
-                df = Graphs.get_population_one_cell_data_frame(os.path.dirname(file) + "/" + file2)
+                df = decoder.get_population_one_cell_data_frame(file2)
                 total_num = df.shape[0]
                 acc.append(df.loc[(df['acc'] >= 0) & (df['acc'] <= 0 + 0.2)].shape[0])
                 acc.extend([df.loc[(df['acc'] > x) & (df['acc'] <= x + 0.2)].shape[0] for x in steps[1:]])
-                print(acc)
                 final_data = DataFrame({'acc': new_arr, 'cell_percentage': [x / total_num for x in acc]})
                 print(ggplot(data=final_data,
                              mapping=aes(x='acc', y='cell_percentage')) + \
@@ -160,7 +161,6 @@ class Graphs:
                       ggtitle(os.path.basename(file2)) +
                       labs(x='Accuracy', y='Cell percentage') +
                       theme_classic())
-
 
     def creates_data_frag(self, info):
         success_rate = []
@@ -327,5 +327,8 @@ class Graphs:
 #####################################################################
 #                               END
 #####################################################################
-
-# Graphs.plot_acc_over_concat_cells(['/home/mercydude/Desktop/Neural_Analyzer/out/project_1/direction/PURSUIT/algo1/SNR'])
+# folder = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/"
+# path1 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/SNR"
+# path2 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/saccade/simple_knn/SNR"
+# Graphs.plot_acc_over_concat_cells([folder])
+# Graphs.plot_histogram([path2])

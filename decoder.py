@@ -119,6 +119,9 @@ class decoder(object):
                               'population': population_name_list,'kind':kind_name_list, 'algorithm':algo_name_list,
                               'experiment': expirement_list, 'group': group})
 
+
+
+
     @staticmethod
     def get_population_one_cell_data_frame(file_path:str):
         if os.path.isdir(file_path):
@@ -138,7 +141,7 @@ class decoder(object):
                     names_list.append(decoder.get_cell_name(tup[0]))
                     rate_list.append(tup[1])
                     population_list.append(decoder.get_population_name(tup[0]))
-        return DataFrame({'cell_name':names_list, 'rates':rate_list, 'type':population_list})
+        return DataFrame({'cell_name':names_list, 'acc':rate_list, 'type':population_list})
 
 
     def filter_cells(self, cell_names, name):
