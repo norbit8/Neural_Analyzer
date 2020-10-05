@@ -809,6 +809,6 @@ class decoder(object):
 
 # ggplot(data = data, mapping=aes(x='', y='acc', color='population', group='population'))
 
-pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn/SNR"
-
-decoder.get_acc_df_for_graph([pursuit_SNR])
+# pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn/SNR"
+#
+# decoder.get_acc_df_for_graph([pursuit_SNR])
