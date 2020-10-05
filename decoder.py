@@ -86,6 +86,7 @@ class decoder(object):
         expirement_list = []
         group=[]
         for file_path in file_paths:
+                print(file_path)
                 if os.path.isdir(file_path):
                     cell_names = fnmatch.filter(os.listdir(file_path), '*')
                     cell_names = [name for name in cell_names if name in ALL_POSSIBILE_POPULATIONS]
@@ -114,7 +115,7 @@ class decoder(object):
                             kind_name_list.append(kind_name)
                             expirement_name = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(file_name_path))))
                             expirement_list.append(os.path.basename(expirement_name))
-                            group.append(" ".join([expirement_name,kind_name,algo_name, name]))
+                            group.append("\n".join([expirement_name,kind_name,algo_name, name]))
         return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
                               'population': population_name_list,'kind':kind_name_list, 'algorithm':algo_name_list,
                               'experiment': expirement_list, 'group': group})
@@ -769,28 +770,7 @@ class decoder(object):
                 decoder.get_algo_name_from_path(path) + " " + \
                 decoder.get_name_from_path(path)
 
-    # @staticmethod
-    # def plot_acurracy_comparision(one:str, two:str):
-    #     try:
-    #         df1 = decoder.get_population_one_cell_data_frame(one)
-    #         df2 = decoder.get_population_one_cell_data_frame(two)
-    #     except:
-    #         print("input is invalid: one (or both) of the files is not ok")
-    #         exit(0)
-    #     df1.rename(columns={"rates": "rates1"}, inplace=True)
-    #     df2.rename(columns={"rates": "rates2"}, inplace=True)
-    #     final_df = pd.merge(df1, df2, how ='inner', on =['cell_name'])
-    #     if final_df.shape[0] == 0:
-    #         print("no matching cells")
-    #         exit(0)
-    #     print(ggplot(data=final_df,
-    #                  mapping=aes(x="rates1", y="rates2",color="cell_name")) + \
-    #     geom_point(alpha=0.8) + \
-    #     labs(x=decoder.get_full_name(one) + ' Accuracy', y=decoder.get_full_name(two) + ',Accuracy') + \
-    #           scale_x_continuous(breaks=np.arange(0,  1, 0.05)) + \
-    #           scale_y_continuous(breaks=np.arange(0, 1, 0.05))
-    #     )
-    #     return final_df
+
 
 # path1 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/SNR"
 # path2 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/saccade/simple_knn/SNR"

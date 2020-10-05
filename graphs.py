@@ -282,6 +282,30 @@ class Graphs:
                       geom_errorbar(mapping=aes(x="time", ymin='acc-std', ymax='acc+std')))
         return self.__frag_df
 
+    @staticmethod
+    def plot_acurracy_comparision(one:str, two:str):
+        try:
+            df1 = decoder.get_population_one_cell_data_frame(one)
+            df2 = decoder.get_population_one_cell_data_frame(two)
+        except:
+            print("input is invalid: one (or both) of the files is not ok")
+            exit(0)
+        df1.rename(columns={"acc": "acc1"}, inplace=True)
+        df2.rename(columns={"acc": "acc2"}, inplace=True)
+        final_df = pd.merge(df1, df2, how ='inner', on =['cell_name'])
+        if final_df.shape[0] == 0:
+            print("no matching cells")
+            exit(0)
+        print(ggplot(data=final_df,
+                     mapping=aes(x="acc1", y="acc2",color="cell_name")) + \
+        geom_point(alpha=0.8) + \
+              geom_text(aes(label="cell_name"), fontweight="5") +\
+        labs(x=decoder.get_full_name(one) + ' Accuracy', y=decoder.get_full_name(two) + ',Accuracy') + \
+              scale_x_continuous(breaks=np.arange(0,  1, 0.05)) + \
+              scale_y_continuous(breaks=np.arange(0, 1, 0.05))
+        )
+        return final_df
+
     def help(self):
         print("commands: \n"
               " (*) plot_acc_over_concat_cells(populations: List[str] = None,"
@@ -328,7 +352,9 @@ class Graphs:
 #                               END
 #####################################################################
 # folder = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/"
-# path1 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/SNR"
-# path2 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/saccade/simple_knn/SNR"
-# Graphs.plot_acc_over_concat_cells([folder])
-# Graphs.plot_histogram([path2])
+pursuit_folder = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn/SNR"
+saccade_folder = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/saccade/simple_knn/SNR"
+# Graphs.plot_acc_over_concat_cells([pursuit_folder])
+# Graphs.plot_acc_over_concat_cells([saccade_folder])
+# Graphs.plot_histogram([pursuit_folder])
+Graphs.plot_acurracy_comparision(pursuit_folder, saccade_folder)
