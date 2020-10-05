@@ -13,6 +13,7 @@ from scipy.io import loadmat
 from typing import List
 from pandas import *
 import numpy as np
+import math
 
 #remember to delete
 from plotnine import *
@@ -85,8 +86,8 @@ class decoder(object):
         K_population = []
         expirement_list = []
         group=[]
+        stddev = []
         for file_path in file_paths:
-                print(file_path)
                 if os.path.isdir(file_path):
                     cell_names = fnmatch.filter(os.listdir(file_path), '*')
                     cell_names = [name for name in cell_names if name in ALL_POSSIBILE_POPULATIONS]
@@ -104,8 +105,13 @@ class decoder(object):
                         for i,tup in enumerate(info):
                             if i==0:
                                 K_population.append(i+1)
+                                acc_list = [result[1] for result in tup[0]]
                             else:
                                 K_population.append(len(tup[0][0][0][0]))
+                                acc_list = [result[0][1] for result in tup[0]]
+
+                            deviation = np.std(np.array(acc_list), ddof=1) / math.sqrt(len(acc_list))
+                            stddev.append(deviation)
                             rate_list.append(tup[1])
                             name = os.path.basename(file_name_path)
                             population_name_list.append(name)
@@ -118,7 +124,7 @@ class decoder(object):
                             group.append("\n".join([expirement_name,kind_name,algo_name, name]))
         return DataFrame({'concatenated_cells': K_population, 'acc': rate_list,
                               'population': population_name_list,'kind':kind_name_list, 'algorithm':algo_name_list,
-                              'experiment': expirement_list, 'group': group})
+                              'experiment': expirement_list, 'group': group, 'std': stddev})
 
 
 
@@ -802,3 +808,7 @@ class decoder(object):
 #
 
 # ggplot(data = data, mapping=aes(x='', y='acc', color='population', group='population'))
+
+pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn/SNR"
+
+decoder.get_acc_df_for_graph([pursuit_SNR])
