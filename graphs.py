@@ -139,12 +139,3 @@ class Graphs:
         )
         return final_df
 
-
-path1 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/"
-path2 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/saccade/simple_knn"
-path3 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn_fragments"
-
-file1 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn_fragments/SNR1"
-file2 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/SNR"
-
-Graphs.plot_acc_over_concat_cells(([path1],))
