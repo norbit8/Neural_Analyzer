@@ -29,11 +29,11 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 1  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 100  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 1  # number of iteration on each K-population of cells.
-    K = 30  # number of files per time
+    TIMES = 30  # number of iteration on each K-population of cells.
+    K = 48  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
