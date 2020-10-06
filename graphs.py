@@ -344,12 +344,12 @@ class Graphs:
 #                               END
 #####################################################################
 # folder = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/"
-# pursuit_folder = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn/SNR"
-# saccade_folder = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/saccade/simple_knn/SNR"
+# pursuit_folder = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/pursuit/simple_knn"
+# saccade_folder = "/Users/shaigindin/MATY/Neural_Analyzer/noga_out/project_name/target_direction/saccade/simple_knn"
 # Graphs.plot_acc_over_concat_cells([pursuit_folder])
-# Graphs.plot_acc_over_concat_cells([saccade_folder])
+# Graphs.plot_acc_over_concat_cells([saccade_folder, pursuit_folder])
 # Graphs.plot_histogram([pursuit_folder])
 # Graphs.plot_acurracy_comparision(pursuit_folder, saccade_folder)
-pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
-
-Graphs.plot_fragments([pursuit_SNR], [1, 10 , 20 ,30])
+# pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
+#
+# Graphs.plot_fragments([pursuit_SNR], [1, 10 , 20 ,30])

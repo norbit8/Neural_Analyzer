@@ -16,10 +16,9 @@ from pandas import *
 import numpy as np
 import math
 from functools import reduce
+import mat4py as mp
 
 
-#remember to delete
-from plotnine import *
 
 ALL_POSSIBILE_POPULATIONS = ["SNR", "MSN", "TAN", "CS","SS","CRB"]
 REG_FOR_FRAGMENTS = r'^(CRB|MSN|SS|CS|TAN|SNR)\d+'
@@ -840,6 +839,14 @@ class decoder(object):
                 decoder.get_algo_name_from_path(path) + " " + \
                 decoder.get_name_from_path(path)
 
+    #better to use DataFrame Builtin function to_csv and read it as table in matlab with
+    #  in matlab write : A = readtable("filename.csv")
+
+    @staticmethod
+    def save_df_to_mat(data,out_path):
+        out_path = os.path.join(out_path, '')
+        EEGdata = data.apply(tuple).to_dict()
+        mp.savemat(out_path + 'EEGdata.mat', {'structs': EEGdata})
 
 
 # path1 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/SNR"
@@ -873,7 +880,9 @@ class decoder(object):
 
 # ggplot(data = data, mapping=aes(x='', y='acc', color='population', group='population'))
 
-pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
+# pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
 #
-pd.set_option('display.max_columns', None)
-print(decoder.get_acc_df_for_graph_frag([pursuit_SNR]))
+# pd.set_option('display.max_columns', None)
+# df = decoder.get_acc_df_for_graph_frag([pursuit_SNR])
+# df.to_csv("/Users/shaigindin/MATY/matlab/pop.csv")
+# decoder.save_df_to_mat(df, "/Users/shaigindin/MATY/matlab")
