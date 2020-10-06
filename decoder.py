@@ -807,7 +807,6 @@ class decoder(object):
             for line in info_file.readlines():
                 print(line)
 
-
     def get_y_axis_values(self,path : str):
         with open(path + ".d", 'rb') as info_file:
             info = pickle.load(info_file)
