@@ -99,6 +99,12 @@ class Graphs:
         return df
 
     @staticmethod
+    def help():
+        with open("essentials/graphs_docs", 'r') as info_file:
+            for line in info_file.readlines():
+                print(line)
+
+    @staticmethod
     def plot_acurracy_comparision(one: str, two: str):
         try:
             df1 = decoder.get_population_one_cell_data_frame(one)
@@ -121,3 +127,4 @@ class Graphs:
               scale_y_continuous(breaks=np.arange(0, 1, 0.05))
         )
         return final_df
+
