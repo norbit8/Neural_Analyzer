@@ -2,11 +2,7 @@ Instructions:
 preparations
 first you need to convert matlab files to csv. in order to do so,
 arrange in input folder as such:
-input_folder -> 1) eyes (folder) -> 1.1) pursuit (folder) -> 1.1.1) put your pursuit files here
-                                 -> 1.2) saccade (folder) -> 1.2.1) put your saccade files here
-
-             -> 2) rewards (folder) -> 2.1) pursuit (folder) -> 1.1.1) put your pursuit files here
-                                    -> 2.2) saccade (folder) -> 1.2.1) put your saccade files here
+input_folder -> project_name : for example "Noga"
 
 PAY ATTENTION - all the matlab file names has to be in this matter population name in CAPITAL letters underscore name of cell
 for example CS_4985.mat or MSN _4547.mat.
@@ -15,6 +11,8 @@ now, you can create an instance of decoder, for example:
 
 a = decoder(path for input directory, path for output directory, ['SNR','msn',CRB])
 it means that this decoder will convert snr msn and crb files only.
+for example:
+
 
 now to convert matlab to csv call the convert_matlab_to_csv function for example:
 

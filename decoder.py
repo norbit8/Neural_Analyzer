@@ -845,3 +845,4 @@ class decoder(object):
         mp.savemat(out_path + 'EEGdata.mat', {'structs': EEGdata})
 
 
+
