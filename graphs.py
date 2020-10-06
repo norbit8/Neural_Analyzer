@@ -1,6 +1,7 @@
 # IMPORTS
 from plotnine import *  # ggplot
 from decoder import *
+from typing import Tuple, List
 
 CRED = '\033[91m'  # RED COLOR
 CGREEN = '\033[92m'  # GREEN COLOR
@@ -20,7 +21,7 @@ class Graphs:
         pass
 
     @staticmethod
-    def plot_acc_over_concat_cells(files: List[str] = None, number_of_concat_cells: int = 100, ticks: int = 1):
+    def plot_acc_over_concat_cells(mega_files: Tuple[List[str]] = None, number_of_concat_cells: int = 100, ticks: int = 1):
         """
         Drawing a graphs of accuracies over number of concatenated cells, of all the populations selected.
         and of all of the experiment types.
@@ -29,11 +30,21 @@ class Graphs:
         :param number_of_concat_cells: Number of cells to show !!!INCLUSIVE!!!. (X Axis ticks)
         :return: The filtered DataFrame.
         """
-        filtered_dataframe = decoder.get_acc_df_for_graph(files)
+
+        for i,files in enumerate(mega_files):
+            if (i==0):
+                filtered_dataframe = decoder.get_acc_df_for_graph(files)
+                filtered_dataframe.insert(0,"graph",[0 for j in range(filtered_dataframe.shape[0])],True)
+            else:
+                temp_df = decoder.get_acc_df_for_graph(files)
+                temp_df.insert(0, "graph", [i for j in range(temp_df.shape[0])], True)
+                filtered_dataframe = pd.concat([filtered_dataframe, temp_df],axis =0)
+
         print(ggplot(data=filtered_dataframe,
                      mapping=aes(x='concatenated_cells', y='acc', color='group', group='group')) + \
               geom_line() +
               geom_point() +
+              facet_wrap('~graph') +
               scale_x_continuous(
                   breaks=np.arange(1, number_of_concat_cells + 1, ticks)) +  # X axis leaving out some ticks
               scale_y_continuous(breaks=np.arange(0, 1, 0.05)) +  # Y axis scaling
@@ -129,3 +140,11 @@ class Graphs:
         return final_df
 
 
+path1 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/"
+path2 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/saccade/simple_knn"
+path3 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn_fragments"
+
+file1 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn_fragments/SNR1"
+file2 = "/Users/shaigindin/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/SNR"
+
+Graphs.plot_acc_over_concat_cells(([path1],))
