@@ -2,8 +2,6 @@
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 import fnmatch
-# from wcmatch import wcmatch
-# from wcmatch import fnmatch as fn
 import re
 import os
 from sklearn.metrics import accuracy_score
@@ -15,7 +13,6 @@ from typing import List
 from pandas import *
 import numpy as np
 import math
-from functools import reduce
 import mat4py as mp
 
 
@@ -847,42 +844,3 @@ class decoder(object):
         out_path = os.path.join(out_path, '')
         EEGdata = data.apply(tuple).to_dict()
         mp.savemat(out_path + 'EEGdata.mat', {'structs': EEGdata})
-
-
-# path1 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn/SNR"
-# path2 = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/saccade/simple_knn/SNR"
-# decoder.plot_acurracy_comparision(path1, path2)
-## a.control_group_cells("/home/rachel/Neural_Analyzer/files/MATY_FILES/")
-
-# a = decoder('/Users/shaigindin/MATY/Neural_Analyzer/files/in',
-#             '/Users/shaigindin/MATY/Neural_Analyzer/files/out1',['SNR','MSN','CRB'])
-
-# for eyes: target_direction , for rewards: reward_probability
-# a.convert_matlab_to_csv_temp(exp="project_name")
-# a.analyze(project_name = "project_name", is_common=False)
-# a.analyze(project_name = "project_name", is_common=True)
-# print(a.get_y_axis_values('/Users/shaigindin/MATY/Neural_Analyzer/files/out1/csv_files/project_name/pur/'))
-# a.convert_matlab_to_csv_temp(exp="moshe", y_axis_name='target_direction' ,pop=0)
-
-# paths = ["/Users/shaigindin/MATY/Neural_Analyzer/files/finalData/EYES/PURSUIT/SNR","/Users/shaigindin/MATY/Neural_Analyzer/files/finalData/EYES/PURSUIT/MSN"]
-# data = decoder.get_acc_df_for_graph(paths)
-# print(data)
-
-
-# decoder.file_name_changer("/Users/shaigindin/MATY/Neural_Analyzer/files/in/project_name/saccade/")
-
-# g = Graphs(['SNR','msn','crb','cs'], ['pursuit','saccade'], '/Users/shaigindin/MATY/Neural_Analyzer/files/out/REWARDS/', fragments_cells=[0,4,7,9],load_fragments=False)
-#
-# g.plot_fragments()
-# g.plot_experiments_same_populations()
-# g.plot_acc_over_concat_cells()
-#
-
-# ggplot(data = data, mapping=aes(x='', y='acc', color='population', group='population'))
-
-# pursuit_SNR = "/Users/shaigindin/MATY/Neural_Analyzer/files/out1/project_name/target_direction/pursuit/simple_knn_fragments"
-#
-# pd.set_option('display.max_columns', None)
-# df = decoder.get_acc_df_for_graph_frag([pursuit_SNR])
-# df.to_csv("/Users/shaigindin/MATY/matlab/pop.csv")
-# decoder.save_df_to_mat(df, "/Users/shaigindin/MATY/matlab")
