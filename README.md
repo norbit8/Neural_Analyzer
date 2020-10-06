@@ -1,5 +1,5 @@
 # Neural Analyzer
- <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/neuralSpikesExample.png" width="800" />
+ <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/neuralSpikesExample.png" width="800" />
 
 A python package that includes methods for decoding, and plotting neural activity.
 Specifically used in the expirement where we sample neural activity from the [Basal ganglia](https://en.wikipedia.org/wiki/Basal_ganglia) and the [cerebellum](https://en.wikipedia.org/wiki/Cerebellum) (Using a *Macaca fascicularis* monkeys) while the monkeys are targeting moving rectangles.
