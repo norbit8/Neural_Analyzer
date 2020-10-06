@@ -1,4 +1,6 @@
 # Neural Analyzer
+[![Coverage Status](https://coveralls.io/repos/github/norbit8/Neural_Analyzer/badge.svg?branch=master)](https://coveralls.io/github/norbit8/Neural_Analyzer?branch=master)
+
  <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/neuralSpikesExample.png" width="800" />
 
 A python package that includes methods for decoding, and plotting neural activity.
@@ -33,7 +35,7 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
 **6)** Create an instance of the decoder class and the graphs class:
 
     dec = decoder.decoder(**kwargs)
-    g = graphs.graphs(**kwargs)
+    Graph - no need, static lib
        
 To see more information please use the ```dec.help()``` method, or ```g.help()``` method.
 
