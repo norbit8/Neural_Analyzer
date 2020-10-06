@@ -49,4 +49,9 @@ To see more information please use the ```dec.help()``` method, or ```g.help()``
 ### "out" folder's structure
 
  <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/Folder_Diagram.png" width="800" />
+ 
+ ### Documentation
+ 
+ [decoder class](https://github.com/norbit8/Neural_Analyzer/blob/master/essentials/decoder_instructions) 
+ [graphs class](https://github.com/norbit8/Neural_Analyzer/blob/master/essentials/graphs_docs)
 
