@@ -15,6 +15,7 @@ First, we suggest you to use `conda` in order to reconstruct our work environemn
 **2)** To recreate the environment you can do the following:
 
     conda env create -f env.yml
+(The env.yml file is located at essentials/env.yml)
        
 **3)** Activate the environment like so:
 
