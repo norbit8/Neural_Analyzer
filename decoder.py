@@ -25,10 +25,6 @@ RUNNING_THE_TEST = "Choose folders for running the test"
 
 LAST_COLUMN = -1
 
-
-
-
-
 class decoder(object):
     """
     Decoder Class
@@ -66,18 +62,34 @@ class decoder(object):
 
     @staticmethod
     def get_population_name(cell_name):
+        """
+        gets 39#CRB_4847.csv
+        return CRB
+        """
         return cell_name[cell_name.find("#")+1:cell_name.find("_")]
+
 
     @staticmethod
     def get_population_name_and_population(cell_name):
+        """
+        gets 39#CRB_4847.csv
+        return CRB_4847
+        """
         return cell_name[cell_name.find("#")+1:cell_name.find(".")]
 
     @staticmethod
     def get_cell_name(cell_name):
+        """
+        gets 39#CRB_4847.csv
+        return 4847
+        """
         return cell_name[cell_name.find("_") + 1:cell_name.find(".")]
 
     @staticmethod
     def get_acc_df_for_graph(file_paths:List, time=-1):
+        """
+        get list of folders or files and makes a whole data frame
+        """
         time_list = []
         algo_name_list = []
         kind_name_list = []
@@ -175,22 +187,15 @@ class decoder(object):
                           'experiment': expirement_list, 'group': group, 'std': stddev, 'time': time_list})
 
 
-    @staticmethod
-    def get_acc_df_for_fragments_graph(file_paths:List):
-        dfList = []
-        for file_path in file_paths:
-            if os.path.isdir(file_path):
-                cell_names = fnmatch.filter(os.listdir(file_path), '*')
-                cells = [os.path.join(file_path, val) for val in cell_names if re.search(REG_FOR_FRAGMENTS, val)]
-            else:
-                cells = [file_path]
-            for cell in cells:
-                time_sagment = ''.join(i for i in os.path.basename(cell) if i.isdigit())
-                print(decoder.get_acc_df_for_graph([cell], int(time_sagment)))
-        return
+
 
     @staticmethod
     def get_population_one_cell_data_frame(file_path:str):
+        """
+        get file path for example
+        ~/MATY/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn
+        and return data frame of the cell names and their accuracy
+        """
         if os.path.isdir(file_path):
             cell_names = fnmatch.filter(os.listdir(file_path), '*')
             cell_names = [name for name in cell_names if name in ALL_POSSIBILE_POPULATIONS]
@@ -223,6 +228,9 @@ class decoder(object):
 
 
     def ask_for_dirs(self, path: str, msg):
+        """
+        load question for user and return list of ints represent the user's choices
+        """
         subfolders = [f.path for f in os.scandir(path) if f.is_dir()]
         print(msg)
         for i,folder in enumerate(subfolders):
@@ -393,6 +401,9 @@ class decoder(object):
         return directions
 
     def extractNSampelsFromAllDirections(self, directions):
+        """
+        extract samples for test
+        """
         directionsAverageVector = []
         testSampels = []
         for direction in directions:
@@ -440,6 +451,9 @@ class decoder(object):
         return np.hstack(TrainAvgMatricesCombined), np.hstack(testMatriceCombined)
 
     def get_y_axis_from_disk(self, path, name, y_axis_key):
+        """
+            read the choses y_axis from disk or dictionary
+        """
         try:
             return self.__files[name][y_axis_key]
         except:
@@ -449,11 +463,17 @@ class decoder(object):
                 return info[y_axis_key]
 
     def clean_name(self,name):
+        """
+        return the name CRB_4863
+        """
         name = name[name.find("#") + 1:]
         name = name[:name.find(".")]
         return name
 
     def read_from_disk_or_dictionary(self, path, cell_name):
+        """
+        return the cell spikes matrice from dictionary or from disk
+        """
         try:
             return self.__files[cell_name]
         except:
@@ -463,7 +483,6 @@ class decoder(object):
 
     def read_from_disk(self, sampling, y_axis_key, is_fragments=False, segment=0, DIRECTION = True, ):
         """
-
         @param sampling: the names of the cells to read together and create one matrice
         @param is_fragments: to know if to split only the segmant or to read from 1000:2200
         @param segment:
@@ -533,6 +552,13 @@ class decoder(object):
 
 
     def get_common_y_axis(self, folders, path):
+        """
+        function checks the .d file from all the folders and return only the common ones
+        for example
+        pursuit/.d -> ['reward', 'speed']
+        saccade/.d -> ['reward', 'direction']
+        will return only 'reward'
+        """
         try:
             l = []
             for folder in folders:
@@ -543,6 +569,9 @@ class decoder(object):
             exit(1)
 
     def get_y_axis_column(self, common_y_axis):
+        """
+        return the axis the user chose
+        """
         common_y_axis = list(common_y_axis)
         print("choose the dependent value\s:")
         for i, y in enumerate(common_y_axis):
@@ -558,6 +587,9 @@ class decoder(object):
 
 
     def one_cell_session(self, all_cell_names, y_axis):
+        """
+        when k=1, instead of randomly chose TIMES cells it will run the algo over all the cells
+        """
         results = 0
         classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
         results_list = []
@@ -580,6 +612,9 @@ class decoder(object):
         return results_list, totalAv
 
     def get_algos(self):
+        """
+        get use choice of algorithm
+        """
         print("Choose the Algorithims")
         for i,algo in enumerate(self.__algo_names):
             print(i+1,") ", algo)
@@ -593,8 +628,7 @@ class decoder(object):
 
     def analyze(self, project_name:str, is_common = False, lag = 1000, segments_size = 12):
         """
-        @param type: should be 0 for persuit or 1 for  saccade
-        @return:
+            analyze function...
         """
 
         self.LAG = lag
@@ -626,6 +660,10 @@ class decoder(object):
 
     @staticmethod
     def create_name_of_folder(folders):
+        """
+        get list of folder names for example ['pursuit','saccade'] and return
+        'pursuit_saccade'
+        """
         name = ["common"]
         for folder in folders:
             name.append(os.path.basename(folder))
@@ -808,24 +846,47 @@ class decoder(object):
                 print(line)
 
     def get_y_axis_values(self,path : str):
+        """
+        this function open the info file stored ad .d with all the y_axises from the matlab folder
+        """
         with open(path + ".d", 'rb') as info_file:
             info = pickle.load(info_file)
         return info
 
     @staticmethod
     def get_name_from_path(path:str):
+        """
+          take the name from the path
+         from ~/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/SNR
+         return SNR
+        """
         return os.path.basename(path)
 
     @staticmethod
     def get_kind_from_path(path:str):
+        """
+          take the name from the path
+         from ~/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/SNR
+         return pursuit
+        """
         return  os.path.basename(os.path.dirname(os.path.dirname(path)))
 
     @staticmethod
     def get_expirement_from_path(path:str):
+        """
+          take the name from the path
+         from ~/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/SNR
+         return target_direction
+        """
         return  os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(path))))
 
     @staticmethod
     def get_algo_name_from_path(path):
+        """
+          take the name from the path
+         from ~/Neural_Analyzer/out/nogas_project/target_direction/pursuit/simple_knn/SNR
+         return simple_knn
+        """
         return os.path.basename(os.path.dirname(path))
 
     @staticmethod
@@ -835,14 +896,14 @@ class decoder(object):
                 decoder.get_algo_name_from_path(path) + " " + \
                 decoder.get_name_from_path(path)
 
+
     #better to use DataFrame Builtin function to_csv and read it as table in matlab with
     #  in matlab write : A = readtable("filename.csv")
-
     @staticmethod
-    def save_df_to_mat(data,out_path):
+    def save_df_to_mat(data,out_path, the_name_you_want):
         out_path = os.path.join(out_path, '')
-        EEGdata = data.apply(tuple).to_dict()
-        mp.savemat(out_path + 'EEGdata.mat', {'structs': EEGdata})
+        df = data.apply(tuple).to_dict()
+        mp.savemat(out_path + the_name_you_want, {'structs': df})
 
 
 
