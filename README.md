@@ -1,5 +1,6 @@
 # Neural Analyzer
 [![Coverage Status](https://coveralls.io/repos/github/norbit8/Neural_Analyzer/badge.svg?branch=master)](https://coveralls.io/github/norbit8/Neural_Analyzer?branch=master)
+
  <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/neuralSpikesExample.png" width="800" />
 
 A python package that includes methods for decoding, and plotting neural activity.
