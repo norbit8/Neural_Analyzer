@@ -236,7 +236,7 @@ class decoder(object):
         return [subfolders[i-1] for i in userList]
 
 
-    def convert_matlab_to_csv_temp(self, exp:str ):
+    def convert_matlab_to_csv(self, exp:str):
         """
         The expirement data is provided in the form of a MATLAB file, thus some pre-processing is needed
         in order to convert it to a more useable data-structre, in particular numpy array.
