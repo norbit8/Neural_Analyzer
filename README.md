@@ -46,9 +46,7 @@ To see more information please use the ```dec.help()``` method, or ```g.help()``
     
 -For matching cells one should make sure that only the matching cells are in the input directories for the decoder.
 
-NOTICE
-
-The OUT folder's structure
+### "out" folder's structure
 
  <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/Folder_Diagram.png" width="800" />
 
