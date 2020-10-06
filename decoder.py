@@ -14,7 +14,7 @@ from pandas import *
 import numpy as np
 import math
 import mat4py as mp
-
+from tqdm import tqdm
 
 
 ALL_POSSIBILE_POPULATIONS = ["SNR", "MSN", "TAN", "CS","SS","CRB"]
@@ -29,11 +29,11 @@ class decoder(object):
     """
     Decoder Class
     """
-    NUMBER_OF_ITERATIONS = 100  # number of iteration of each group of cells for finding a solid average
+    NUMBER_OF_ITERATIONS = 1  # number of iteration of each group of cells for finding a solid average
     SIGMA = 30  # sigma for the gaussian
     NEIGHBORS = 1  # only closet neighbour, act like SVM
-    TIMES = 30  # number of iteration on each K-population of cells.
-    K = 48  # number of files per time
+    TIMES = 1  # number of iteration on each K-population of cells.
+    K = 30  # number of files per time
     LAG = 1000  # where to start the experiment (in the eye movement)
     d = {0: "PURSUIT", 1: "SACCADE"} # innder dictionary
     SEGMENTS = 12 #how many segment of 100ms we want to cut.
@@ -685,8 +685,9 @@ class decoder(object):
                 all_cell_names.sort()
                 #empty files cach
                 self.__files = dict()
-
-                for population in [x for x in self.population_names if x not in self.loadFromLogger()]:
+                self.find_already_made_files()
+                for population in tqdm([x for x in self.population_names if x not in self.loadFromLogger()],
+                                       desc="Processing folder " + folder):
                     cell_names = self.filter_cells(all_cell_names, population)
                     cell_names = self.filterCellsbyRows(cell_names)
                     # build list which saves info
@@ -699,11 +700,10 @@ class decoder(object):
                     sums = []
                     classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2, weights='distance')
                     # iterating over k-population of cells from 1 to K
-                    for number_of_cells in range(1, self.K + 1, self.step):
+                    for number_of_cells in tqdm(range(1, self.K + 1, self.step),
+                                                desc="Processing population " + population):
                         if number_of_cells == 1:
-                            print(y_axis_key)
                             infoPerGroupOfCells, totalAv = self.one_cell_session(cell_names, y_axis_key)
-                            print(population, number_of_cells, totalAv)
                             info.append((infoPerGroupOfCells, totalAv))
                         else:
                             # saves each groupCells
@@ -738,7 +738,6 @@ class decoder(object):
                                 scoreForCells.append((sampeling, sum1 / self.NUMBER_OF_ITERATIONS))
                                 infoPerGroupOfCells.append(scoreForCells)
 
-                            print(population, number_of_cells, totalAv / self.TIMES)
                             info.append((infoPerGroupOfCells, totalAv / self.TIMES))
 
                     self.savesInfo(info, population, "")
@@ -749,6 +748,12 @@ class decoder(object):
         if not os.path.exists(self.__output_dir + name):
             os.makedirs(self.__output_dir + name)
         self.__temp_path_for_writing = self.__output_dir + name + "/"
+
+    def find_already_made_files(self):
+        for x in self.population_names:
+            if x in self.loadFromLogger():
+                print(x, "is already done!")
+
 
     def simple_knn_fragments(self, y_axis_keys, folders, is_common):
         for y_axis_key in y_axis_keys:
@@ -768,8 +773,9 @@ class decoder(object):
 
                 # empty files cach
                 self.__files = dict()
-
-                for population in [x for x in self.population_names if x not in self.loadFromLogger()]:
+                self.find_already_made_files()
+                for population in tqdm([x for x in self.population_names if x not in self.loadFromLogger()],
+                                       desc="Processing folder " + os.path.basename(folder)):
                     cell_names = self.filter_cells(all_cell_names, population)
                     cell_names = self.filterCellsbyRows(cell_names)
                     # build list which saves info
@@ -782,7 +788,7 @@ class decoder(object):
                     classifier = KNeighborsClassifier(n_neighbors=self.NEIGHBORS, metric='minkowski', p=2,
                                                       weights='distance')
                     # iterating over k-population of cells from 1 to K
-                    for i in range(self.SEGMENTS):
+                    for i in tqdm(range(self.SEGMENTS), desc="Processing " + population + " segments"):
                         sums = []
                         info = []
                         segment = i
@@ -904,6 +910,5 @@ class decoder(object):
         out_path = os.path.join(out_path, '')
         df = data.apply(tuple).to_dict()
         mp.savemat(out_path + the_name_you_want, {'structs': df})
-
 
 
