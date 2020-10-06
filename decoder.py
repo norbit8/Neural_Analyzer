@@ -803,7 +803,7 @@ class decoder(object):
             os.rename(path + name, path + newName)
 
     def help(self):
-        with open("decoder_instructions", 'r') as info_file:
+        with open("essentials/decoder_instructions", 'r') as info_file:
             for line in info_file.readlines():
                 print(line)
 
@@ -844,3 +844,5 @@ class decoder(object):
         out_path = os.path.join(out_path, '')
         EEGdata = data.apply(tuple).to_dict()
         mp.savemat(out_path + 'EEGdata.mat', {'structs': EEGdata})
+
+
