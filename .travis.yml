@@ -3,3 +3,4 @@ install:
   - pip install -r ./essentials/requirements.txt
 python:
   - "3.7"
+script: pytest test.py
