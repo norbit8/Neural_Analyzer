@@ -675,11 +675,13 @@ class decoder(object):
                 basename_folder = os.path.basename(os.path.dirname(folder))
 
                 self.temp_path_for_reading = folder + "/"
+
+                common_path  = ""
                 if (is_common and len(folders)>1):
-                    inner_folder = decoder.create_name_of_folder(folders)
-                else:
-                    inner_folder = os.path.basename(folder)
-                self.createDirectory( basename_folder +  "/" + y_axis_key + "/" + inner_folder + "/simple_knn/")
+                    common_path = decoder.create_name_of_folder(folders) + "/"
+                inner_folder = os.path.basename(folder)
+
+                self.createDirectory( basename_folder +  "/" + y_axis_key + "/" + common_path + inner_folder + "/simple_knn/")
                 # loading folder
                 all_cell_names = self.filter_cells_for_common(self.temp_path_for_reading, folder, folders, is_common)
                 all_cell_names.sort()
@@ -759,12 +761,15 @@ class decoder(object):
         for y_axis_key in y_axis_keys:
             for folder in folders:
                 basename_folder = os.path.basename(os.path.dirname(folder))
+
+                common_path  = ""
                 if (is_common and len(folders)>1):
-                    inner_folder = decoder.create_name_of_folder(folders)
-                else:
-                    inner_folder = os.path.basename(folder)
+                    common_path = decoder.create_name_of_folder(folders) + "/"
+
+                inner_folder = os.path.basename(folder)
                 self.temp_path_for_reading = folder + "/"
-                self.createDirectory(basename_folder + "/" + y_axis_key + "/" + inner_folder + "/simple_knn_fragments/")
+                self.createDirectory(basename_folder + "/" + y_axis_key + "/"  +common_path +
+                                     inner_folder + "/simple_knn_fragments/")
                 # loading folder
                 # all_cell_names = fnmatch.filter(os.listdir(self.temp_path_for_reading), '*.csv')
                 all_cell_names = self.filter_cells_for_common(self.temp_path_for_reading, folder, folders, is_common)
@@ -912,3 +917,7 @@ class decoder(object):
         mp.savemat(out_path + the_name_you_want, {'structs': df})
 
 
+a = decoder("/Users/shaigindin/MATY/Neural_Analyzer/in", "/Users/shaigindin/MATY/Neural_Analyzer/out",
+            ['SNR','CRB'])
+
+a.analyze("nogas_project", is_common=True)
