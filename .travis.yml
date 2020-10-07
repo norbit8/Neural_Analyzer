@@ -1,3 +1,5 @@
 language: python
+install:
+  - pip install -r ./essentials/requirements.txt
 python:
   - "3.7"
