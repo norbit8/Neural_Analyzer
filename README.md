@@ -1,5 +1,5 @@
 # Neural Analyzer
-[![Build Status](https://travis-ci.org/norbit8/Neural_Analyzer.svg?branch=master)
+![Build Status](https://travis-ci.org/norbit8/Neural_Analyzer.svg?branch=master)
 
  <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/neuralSpikesExample.png" width="800" />
 
