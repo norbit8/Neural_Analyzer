@@ -1,5 +1,5 @@
 # Neural Analyzer
-[![Coverage Status](https://coveralls.io/repos/github/norbit8/Neural_Analyzer/badge.svg?branch=master)](https://coveralls.io/github/norbit8/Neural_Analyzer?branch=master)
+![Build Status](https://travis-ci.org/norbit8/Neural_Analyzer.svg?branch=master)
 
  <img src="https://raw.githubusercontent.com/norbit8/Neural_Analyzer/master/essentials/neuralSpikesExample.png" width="800" />
 
