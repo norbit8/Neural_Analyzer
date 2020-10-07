@@ -917,7 +917,3 @@ class decoder(object):
         mp.savemat(out_path + the_name_you_want, {'structs': df})
 
 
-a = decoder("/Users/shaigindin/MATY/Neural_Analyzer/in", "/Users/shaigindin/MATY/Neural_Analyzer/out",
-            ['SNR','CRB'])
-
-a.analyze("nogas_project", is_common=True)
