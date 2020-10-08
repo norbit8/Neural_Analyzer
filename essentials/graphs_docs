@@ -38,3 +38,6 @@ plot_acc_over_concat_cells(files: Tuple[List[str]] = None, number_of_concat_cell
     if you want to print only snr and crb from pursuit
     do the command
     plot_acc_over_concat_cells(['out/pursuit/simple_knn/SNR','out/pursuit/simple_knn/SNR'])
+
+
+
