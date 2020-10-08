@@ -916,9 +916,3 @@ class decoder(object):
         df = data.apply(tuple).to_dict()
         mp.savemat(out_path + the_name_you_want, {'structs': df})
 
-path = "/Users/shaigindin/Downloads/change/"
-all_cell_names = fnmatch.filter(os.listdir(path), "*")
-for name in all_cell_names:
-    l = name.split("_")
-    newName = l[0]+l[2]
-    os.rename(path + name, path + newName)
