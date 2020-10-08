@@ -825,7 +825,7 @@ class decoder(object):
                             info.append((infoPerGroupOfCells, totalAv / self.TIMES))
                             sums.append(totalAv / self.TIMES)
                             self.savesInfo(info, population, str(segment))
-                    self.saveToLogger(population + str(segment))
+                    self.saveToLogger(population)
 
 
 
