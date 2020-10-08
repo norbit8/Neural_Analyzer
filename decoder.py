@@ -916,4 +916,3 @@ class decoder(object):
         df = data.apply(tuple).to_dict()
         mp.savemat(out_path + the_name_you_want, {'structs': df})
 
-

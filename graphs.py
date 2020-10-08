@@ -139,3 +139,5 @@ class Graphs:
         )
         return final_df
 
+path = "/Users/shaigindin/temp/temp/target_direction/common_pursuit_saccade/pursuit/"
+Graphs.plot_acc_over_concat_cells(([path,],))

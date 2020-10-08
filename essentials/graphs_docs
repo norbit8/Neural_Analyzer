@@ -27,13 +27,13 @@ plot_acc_over_concat_cells(files: Tuple[List[str]] = None, number_of_concat_cell
     important : the input is tuple of folders : (folder1,folder2,...)
     it will print all the folders garph by graph together in the same image for example
     calling the function
-    plot_acc_over_concat_cells( (['out/pursuit/simple_knn'], ['out/saccade//simple_knn')] )
+    plot_acc_over_concat_cells( (['out/pursuit/simple_knn'], ['out/saccade//simple_knn')] )  )
     will print two graphs, side by side of all the population in pursuit and in the other graph
     will print all the population of saccade
 
     if you want to print only the pursuit graph folder
     do the command:
-    plot_acc_over_concat_cells(['out/pursuit/simple_knn'])
+    plot_acc_over_concat_cells( (['out/pursuit/simple_knn'],) )
 
     if you want to print only snr and crb from pursuit
     do the command
