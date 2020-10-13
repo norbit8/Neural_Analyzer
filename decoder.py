@@ -626,11 +626,15 @@ class decoder(object):
                 return
         return [self.__algo_names[i-1] for i in userList]
 
-    def analyze(self, project_name:str, is_common = False, lag = 1000, segments_size = 12):
+    def analyze(self, project_name: str, lag: int, segments_size: int, is_common: bool = False):
         """
-            analyze function...
+        @param project_name:  the name of the folder etc out/project_name
+        @param lag: where to start the test in mili-seconds for exmaple, in direction expirement
+                lag=1000(start of the expirement)
+        @param segments_size: how many segments to cut (each segment is 100 ms), relevant for simple_knn_fragments only
+        @param is_common:
+        @return:
         """
-
         self.LAG = lag
         self.SEGMENTS = segments_size
 
@@ -744,6 +748,19 @@ class decoder(object):
 
                     self.savesInfo(info, population, "")
                     self.saveToLogger(population)
+                decoder.save_parametes_in_text(self)
+
+    @staticmethod
+    def save_parametes_in_text(a):
+        d = {"_decoder__input_dir" : "Input Dir", "_decoder__output_dir": "Output Dir", "population_names": "Population Names"
+            , "_decoder__temp_path_for_writing" : "", "_decoder__files": "", "ALGOS":"",
+             "LAG":"Begining of The Expirement(in ms)", "SEGMENTS":"The Numbers of Segments", "temp_path_for_reading":""}
+        with open(a.__temp_path_for_writing + "param.txt", "w") as param_file:
+            for key,value in vars(a).items():
+                title = d[key]
+                if (title != ""):
+                    param_file.write(title +": " + str(value) + "\n")
+
 
 
     def createDirectory(self, name):
@@ -826,7 +843,7 @@ class decoder(object):
                             sums.append(totalAv / self.TIMES)
                             self.savesInfo(info, population, str(segment))
                     self.saveToLogger(population)
-
+                decoder.save_parametes_in_text(self)
 
 
     @staticmethod
